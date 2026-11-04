@@ -2,8 +2,12 @@ import './fonts.css';
 import './page.css';
 
 // Endereço do site: variável própria > domínio de produção da Vercel > domínio final.
-const SITE = process.env.NEXT_PUBLIC_SITE_URL
-  || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : 'https://nhandu.com.br');
+function siteUrl() {
+  const raw = (process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_PROJECT_PRODUCTION_URL || 'nhandu.com.br').trim();
+  try { return new URL(/^https?:\/\//.test(raw) ? raw : `https://${raw}`).origin; }
+  catch { return 'https://nhandu.com.br'; }
+}
+const SITE = siteUrl();
 
 export const metadata = {
   metadataBase: new URL(SITE),
