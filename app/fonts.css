@@ -1,0 +1,25 @@
+/* Fontes hospedadas no próprio site (sem chamadas ao Google: mais rápido e melhor para a LGPD). */
+@font-face{font-family:'Newsreader';src:url(/fonts/newsreader-latin-300-normal.woff2) format('woff2');font-weight:300;font-style:normal;font-display:swap}
+@font-face{font-family:'Newsreader';src:url(/fonts/newsreader-latin-300-italic.woff2) format('woff2');font-weight:300;font-style:italic;font-display:swap}
+@font-face{font-family:'Newsreader';src:url(/fonts/newsreader-latin-400-normal.woff2) format('woff2');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'Newsreader';src:url(/fonts/newsreader-latin-400-italic.woff2) format('woff2');font-weight:400 600;font-style:italic;font-display:swap}
+@font-face{font-family:'Newsreader';src:url(/fonts/newsreader-latin-500-normal.woff2) format('woff2');font-weight:500 600;font-style:normal;font-display:swap}
+@font-face{font-family:'Geist';src:url(/fonts/geist-latin-400-normal.woff2) format('woff2');font-weight:300 400;font-display:swap}
+@font-face{font-family:'Geist';src:url(/fonts/geist-latin-500-normal.woff2) format('woff2');font-weight:500;font-display:swap}
+@font-face{font-family:'Geist';src:url(/fonts/geist-latin-600-normal.woff2) format('woff2');font-weight:600;font-display:swap}
+@font-face{font-family:'Geist';src:url(/fonts/geist-latin-700-normal.woff2) format('woff2');font-weight:700;font-display:swap}
+@font-face{font-family:'Geist Mono';src:url(/fonts/geist-mono-latin-400-normal.woff2) format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:'Geist Mono';src:url(/fonts/geist-mono-latin-500-normal.woff2) format('woff2');font-weight:500;font-display:swap}
+@font-face{font-family:'Geist Mono';src:url(/fonts/geist-mono-latin-600-normal.woff2) format('woff2');font-weight:600;font-display:swap}
+.form-msg{margin:10px 0 0;font-size:14px;color:var(--ok)}
+.form-msg:empty{display:none}
+button[disabled]{opacity:.7;cursor:progress}
+.legal{min-height:100vh;--acc:#C8431E}
+.legal .hdr-in{justify-content:space-between}
+.legal-in{max-width:760px;padding-top:64px;padding-bottom:120px}
+.legal-in .upd{color:var(--mu);font-size:14px;margin:12px 0 36px}
+.legal-in h2{font-family:'Newsreader',serif;font-weight:400;font-size:26px;letter-spacing:-.01em;margin:40px 0 10px}
+.legal-in p,.legal-in li{font-size:16.5px;line-height:1.7;color:var(--tx2)}
+.legal-in ul{padding-left:20px}
+.legal-in a{color:var(--a2)}
+.legal-in b{color:var(--tx);font-weight:500}
