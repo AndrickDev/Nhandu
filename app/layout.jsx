@@ -1,7 +1,9 @@
 import './fonts.css';
 import './page.css';
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nhandu.com.br';
+// Endereço do site: variável própria > domínio de produção da Vercel > domínio final.
+const SITE = process.env.NEXT_PUBLIC_SITE_URL
+  || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : 'https://nhandu.com.br');
 
 export const metadata = {
   metadataBase: new URL(SITE),
