@@ -1,0 +1,58 @@
+/* Formulário de briefing — identidade Nhandu (creme + urucum). */
+.bf{--bg:#F5F1E8;--bg2:#FBF8F2;--ln:#E2DACB;--ln2:#CFC5B3;--tx:#1A1814;--tx2:#4F4A43;--mu:#6E675E;--acc:#B23B19;--acc-bg:#F7E3DA;--erro:#A6261B;
+  background:var(--bg);color:var(--tx);min-height:100vh;font-family:'Geist',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.bf *{box-sizing:border-box}
+.bf-wrap{max-width:760px;margin:0 auto;padding:0 24px}
+.bf a:focus-visible,.bf button:focus-visible,.bf input:focus-visible,.bf textarea:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
+
+.bf-hdr{border-bottom:1px solid var(--ln);background:rgba(245,241,232,.9);position:sticky;top:0;z-index:5;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.bf-hdr-in{display:flex;align-items:center;justify-content:space-between;height:60px}
+.bf-marca{font-family:'Newsreader',serif;font-size:26px;letter-spacing:-.03em;color:var(--tx);text-decoration:none}
+.bf-tag{font:500 12px 'Geist Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--mu)}
+
+.bf-main{padding-top:48px;padding-bottom:120px;scroll-margin-top:80px}
+.bf-kicker{font:500 12px 'Geist Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--acc);margin:0 0 12px}
+.bf-h1{font-family:'Newsreader',serif;font-weight:300;font-size:clamp(34px,5vw,52px);line-height:1.05;letter-spacing:-.03em;margin:0}
+.bf-h1 em{font-style:italic;color:var(--acc)}
+.bf-lead{font-size:17px;line-height:1.6;color:var(--tx2);margin:14px 0 0}
+.bf-prog{display:flex;gap:6px;margin:28px 0 0}
+.bf-prog button{flex:1;height:6px;border:0;border-radius:99px;background:var(--ln);cursor:pointer;padding:0}
+.bf-prog button.feito{background:var(--tx)}
+.bf-prog button.on{background:var(--acc)}
+.bf-prog button:disabled{cursor:default}
+.bf-salvo{font-size:13px;color:var(--mu);margin:10px 0 0}
+
+.bf-form{margin-top:36px;display:flex;flex-direction:column;gap:22px}
+.bf-campo{border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:8px}
+.bf-campo > label,.bf-campo legend{font-size:15.5px;font-weight:500;line-height:1.45;padding:0}
+.bf-campo legend{margin-bottom:8px}
+.bf-campo legend small{font-weight:400;color:var(--mu)}
+.bf-obr{color:var(--acc)}
+.bf input[type=text],.bf input[type=tel],.bf input[type=email],.bf textarea{font:400 16px 'Geist',sans-serif;color:var(--tx);background:#fff;border:1px solid var(--ln2);border-radius:12px;padding:12px 14px;width:100%}
+.bf textarea{resize:vertical;min-height:88px;line-height:1.5}
+.bf [aria-invalid="true"]{border-color:var(--erro)!important}
+.bf-erro{margin:0;font-size:13.5px;color:var(--erro)}
+.bf-opcoes{display:flex;flex-wrap:wrap;gap:8px}
+.bf-opcoes label{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid var(--ln2);border-radius:999px;background:#fff;font-size:15px;cursor:pointer;transition:background .2s,border-color .2s}
+.bf-opcoes label.on{border-color:var(--acc);background:var(--acc-bg)}
+.bf-opcoes input{accent-color:var(--acc);margin:0;width:16px;height:16px}
+.bf-opcoes label:has(input:focus-visible){outline:2px solid var(--acc);outline-offset:2px}
+
+.bf-consent{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.5;color:var(--tx2);padding:14px;border-radius:12px;background:var(--bg2);border:1px solid var(--ln)}
+.bf-consent.erro{border-color:var(--erro)}
+.bf-consent input{accent-color:var(--acc);width:18px;height:18px;margin-top:2px;flex:0 0 auto}
+.bf-acoes{display:flex;gap:12px;justify-content:flex-end;flex-wrap:wrap;margin-top:6px}
+.bf-btn{font:500 15.5px 'Geist',sans-serif;min-height:48px;padding:0 24px;border-radius:999px;border:1px solid var(--tx);background:var(--tx);color:var(--bg);cursor:pointer}
+.bf-btn:hover{background:var(--acc);border-color:var(--acc);color:#fff}
+.bf-btn.linha{background:transparent;color:var(--tx);border-color:var(--ln2)}
+.bf-btn.linha:hover{border-color:var(--tx);background:transparent;color:var(--tx)}
+.bf-btn[disabled]{opacity:.7;cursor:progress}
+.bf-msg{margin:0;font-size:14px;color:var(--erro);text-align:right}
+.bf-msg:empty{display:none}
+.bf-fim{padding:40px 0}
+
+@media (max-width:600px){
+  .bf-wrap{padding:0 16px}
+  .bf-main{padding-top:32px}
+  .bf-acoes .bf-btn{flex:1}
+}

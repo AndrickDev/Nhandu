@@ -22,6 +22,13 @@ Depois disso, cada `git push` publica uma nova versão.
 
 O formulário envia para `/api/diagnostico` nome, empresa, WhatsApp e segmento, mais os números da calculadora (contatos por mês, % fora do horário, fechamento, valor do cliente, clientes e receita em jogo), a página de origem e os parâmetros UTM. A rota repassa o pedido para o webhook e/ou o e-mail configurados. Sem destino configurado, o pedido aparece só nos logs da Vercel.
 
+## Páginas para vender (fora do Google)
+
+- **`/demo/nutricao`**: landing de demonstração para nutricionistas, com nome, foto e dados de exemplo. O botão no topo alterna entre "Antes do CRN" (lista de espera) e "Agenda aberta". O link "Quero uma assim" usa o `NEXT_PUBLIC_WHATSAPP`.
+- **`/briefing/nutricao`** (também `/briefing/clinica` e `/briefing/confeitaria`): formulário que a cliente preenche depois de fechar. O rascunho fica salvo no navegador dela, e o envio vai para `/api/briefing`, que grava na tabela `briefings` do Supabase (`SUPABASE_URL` + `SUPABASE_SECRET_KEY`; criar a tabela com `supabase/briefings.sql`) e avisa no `BRIEFING_WEBHOOK_URL`/`BRIEFING_EMAIL` ou, sem eles, nos destinos do diagnóstico. **Sem nenhum destino configurado, o envio falha de propósito**, para o briefing não se perder em silêncio.
+
+As perguntas ficam em `lib/briefing.js`: para um nicho novo, adicione um bloco em `NICHOS`.
+
 ## Como a página é gerada
 
 A página foi desenhada no canvas de design (artboard `Main.dc.html`). O arquivo `tools/convert.py` converte esse artboard em `components/NhanduPage.jsx` e `app/page.css`. Ajustes que só existem em produção (WhatsApp, formulário, CNPJ, links legais) ficam em `tools/convert.py` e `lib/prod.js`.
