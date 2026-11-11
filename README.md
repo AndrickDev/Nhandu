@@ -25,7 +25,7 @@ O formulário envia para `/api/diagnostico` nome, empresa, WhatsApp e segmento, 
 ## Páginas para vender (fora do Google)
 
 - **`/demo/nutricao`**: landing de demonstração para nutricionistas, com nome, foto e dados de exemplo. O botão no topo alterna entre "Antes do CRN" (lista de espera) e "Agenda aberta". O link "Quero uma assim" usa o `NEXT_PUBLIC_WHATSAPP`.
-- **`/briefing/nutricao`** (também `/briefing/clinica` e `/briefing/confeitaria`): formulário que a cliente preenche depois de fechar. O rascunho fica salvo no navegador dela, e o envio vai para `/api/briefing`, que repassa ao `BRIEFING_WEBHOOK_URL`/`BRIEFING_EMAIL` ou, sem eles, aos destinos do diagnóstico. **Sem nenhum destino configurado, o envio falha de propósito**, para o briefing não se perder em silêncio.
+- **`/briefing/nutricao`** (também `/briefing/clinica` e `/briefing/confeitaria`): formulário que a cliente preenche depois de fechar. O rascunho fica salvo no navegador dela, e o envio vai para `/api/briefing`, que grava na tabela `briefings` do Supabase (`SUPABASE_URL` + `SUPABASE_SECRET_KEY`; criar a tabela com `supabase/briefings.sql`) e avisa no `BRIEFING_WEBHOOK_URL`/`BRIEFING_EMAIL` ou, sem eles, nos destinos do diagnóstico. **Sem nenhum destino configurado, o envio falha de propósito**, para o briefing não se perder em silêncio.
 
 As perguntas ficam em `lib/briefing.js`: para um nicho novo, adicione um bloco em `NICHOS`.
 

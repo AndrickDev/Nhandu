@@ -1,5 +1,6 @@
 // Recebe o briefing da cliente e repassa ao destino configurado.
 // Destinos (Vercel > Settings > Environment Variables), com os do diagnóstico como reserva:
+//   SUPABASE_URL + SUPABASE_SECRET_KEY                 -> tabela "briefings" (recomendado: fica guardado)
 //   BRIEFING_WEBHOOK_URL (ou DIAGNOSTICO_WEBHOOK_URL)  -> n8n, Make, Zapier ou planilha
 //   RESEND_API_KEY + BRIEFING_EMAIL (ou DIAGNOSTICO_EMAIL) -> e-mail via Resend
 import { etapasDoBriefing } from '../../../lib/briefing';
@@ -48,8 +49,16 @@ export async function POST(req) {
   const webhook = process.env.BRIEFING_WEBHOOK_URL || process.env.DIAGNOSTICO_WEBHOOK_URL;
   const emailPara = process.env.BRIEFING_EMAIL || process.env.DIAGNOSTICO_EMAIL;
   const jobs = [];
+  const supabase = destinoSupabase();
+  if (supabase) {
+    // Guarda no banco (tabela "briefings", ver supabase/briefings.sql). Chave secreta: só no servidor.
+    jobs.push(['supabase', fetch(supabase.url, {
+      method: 'POST', headers: supabase.headers, signal: AbortSignal.timeout(8000),
+      body: JSON.stringify({ nicho, nome, whatsapp, blocos, origem: briefing.origem, consentimento_em: briefing.recebidoEm, recebido_em: briefing.recebidoEm }),
+    })]);
+  }
   if (webhook) {
-    jobs.push(fetch(webhook, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(briefing) }));
+    jobs.push(['webhook', fetch(webhook, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(briefing), signal: AbortSignal.timeout(8000) })]);
   }
   if (process.env.RESEND_API_KEY && emailPara) {
     const texto = [
@@ -57,19 +66,39 @@ export async function POST(req) {
       ...blocos.flatMap((b) => [`## ${b.titulo}`, ...b.respostas.map((r) => `- ${r.pergunta}\n  ${Array.isArray(r.resposta) ? r.resposta.join(', ') : r.resposta || '—'}`), '']),
       `Origem: ${briefing.origem}`,
     ].join('\n');
-    jobs.push(fetch('https://api.resend.com/emails', {
-      method: 'POST', headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+    jobs.push(['email', fetch('https://api.resend.com/emails', {
+      method: 'POST', signal: AbortSignal.timeout(8000), headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ from: process.env.DIAGNOSTICO_EMAIL_FROM || 'Nhandu <onboarding@resend.dev>', to: [emailPara], subject: `Briefing: ${nome} (${estrutura.nome})`, text: texto }),
-    }));
+    })]);
   }
   if (!jobs.length) {
     // Sem destino configurado não há onde guardar: o briefing ficaria só nos logs.
     // Não gravamos as respostas no log (podem ter dados pessoais); só avisamos.
-    console.warn('[briefing] nenhum destino configurado; recebido de', nome);
+    console.warn('[briefing] nenhum destino configurado');
     return Response.json({ ok: false, error: 'sem_destino' }, { status: 503 });
   }
-  const res = await Promise.allSettled(jobs);
+  const res = await Promise.allSettled(jobs.map(([, p]) => p));
+  // Registra cada destino que falhou, só com o status ou o tipo do erro (nunca a mensagem: pode conter a chave).
+  const falhas = res.map((r, i) => [jobs[i][0], r.status === 'fulfilled' ? (r.value.ok ? null : r.value.status) : r.reason?.name || 'erro'])
+    .filter(([, f]) => f !== null);
+  if (falhas.length) console.error('[briefing] falha ao entregar em', Object.fromEntries(falhas));
   const ok = res.some((r) => r.status === 'fulfilled' && r.value.ok);
-  if (!ok) console.error('[briefing] falha ao entregar', res.map((r) => (r.status === 'fulfilled' ? r.value.status : String(r.reason))));
   return Response.json({ ok }, { status: ok ? 200 : 502 });
+}
+
+/** Monta o destino do Supabase a partir do ambiente, ou null se não estiver configurado direito. */
+function destinoSupabase() {
+  const url = (process.env.SUPABASE_URL || '').trim().replace(/\/+$/, '').replace(/\/rest\/v1$/, '');
+  const chave = (process.env.SUPABASE_SECRET_KEY || '').trim();
+  if (!url && !chave) return null;
+  // Chave nova (sb_secret_...) vai só no apikey; a antiga (service_role) é um JWT e vai também no Authorization.
+  const nova = chave.startsWith('sb_secret_');
+  const antiga = chave.startsWith('eyJ');
+  if (!url.startsWith('https://') || !(nova || antiga) || /\s/.test(chave)) {
+    console.error('[briefing] SUPABASE_URL ou SUPABASE_SECRET_KEY inválida: use a URL https do projeto e a chave secreta (sb_secret_... ou service_role)');
+    return null;
+  }
+  const headers = { apikey: chave, 'Content-Type': 'application/json', Prefer: 'return=minimal' };
+  if (antiga) headers.Authorization = `Bearer ${chave}`;
+  return { url: `${url}/rest/v1/briefings`, headers };
 }
