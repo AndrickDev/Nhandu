@@ -13,10 +13,27 @@ npm run dev        # http://localhost:3000
 
 1. Suba esta pasta para um repositório no GitHub.
 2. Em vercel.com, clique em **Add New > Project** e importe o repositório. A Vercel detecta o Next.js sozinha.
-3. Em **Settings > Environment Variables**, cadastre as variáveis do arquivo `.env.example`. As principais são `NEXT_PUBLIC_WHATSAPP`, `NEXT_PUBLIC_CNPJ` e um destino de pedidos (`DIAGNOSTICO_WEBHOOK_URL` ou `RESEND_API_KEY` + `DIAGNOSTICO_EMAIL`).
-4. Em **Settings > Domains**, adicione `nhandu.com.br` e siga as instruções de DNS no registro.br.
+3. Em **Settings > Environment Variables**, cadastre as variáveis do arquivo `.env.example`. As principais são `NEXT_PUBLIC_WHATSAPP`, `NEXT_PUBLIC_CNPJ` e um destino de pedidos (`DIAGNOSTICO_WEBHOOK_URL` ou `RESEND_API_KEY` + `DIAGNOSTICO_EMAIL`). Cadastre também `NEXT_PUBLIC_SITE_URL=https://nhandu.tech` em **Production**: é ela que define a URL canônica, o sitemap, o JSON-LD e o destino do redirecionamento.
+4. Em **Settings > Domains**, adicione `nhandu.tech` e siga as instruções de DNS no registro do domínio. Adicione também `www.nhandu.tech` configurado para redirecionar para `nhandu.tech`.
 
 Depois disso, cada `git push` publica uma nova versão.
+
+## SEO
+
+O que existe no site:
+- `robots.txt` e `sitemap.xml` gerados pelo Next (`app/robots.js`, `app/sitemap.js`).
+- Título, descrição, URL canônica e Open Graph em cada página.
+- Dados estruturados (JSON-LD) na página inicial.
+- Endereços `*.vercel.app` redirecionam (308) para o domínio final, mantendo caminho e parâmetros, mas só em builds de produção (`VERCEL_ENV=production`) e só quando a URL do site (`NEXT_PUBLIC_SITE_URL`) não é um `*.vercel.app`. Em preview e no computador não há redirecionamento. O 308 é permanente e os navegadores o guardam em cache, então o domínio final precisa estar ativo antes do deploy que o usa. Para reverter: a regra é calculada no build; para desligar, defina `NEXT_PUBLIC_SITE_URL` com um endereço `*.vercel.app` (ou remova a regra de `lib/site.mjs`) e faça novo deploy de produção. Navegadores que já guardaram o 308 continuam redirecionando até limpar o cache.
+- A URL única de cada deploy de produção (`<projeto>-<hash>.vercel.app`) também redireciona para o domínio final. Para inspecionar um deploy específico, use um deploy de preview.
+- `lib/site.mjs` é a fonte única da URL do site, do e-mail de contato e do Open Graph base.
+
+Testes: `npm run test:seo` (compila o site e sobe um servidor local na porta 3200). Para usar o Chrome já instalado: `PW_CHANNEL=chrome npm run test:seo`.
+
+Depois de publicar:
+- Cadastre o domínio no Google Search Console e envie `https://nhandu.tech/sitemap.xml`.
+- Cadastre também no Bing Webmaster Tools.
+- Na Vercel, confirme `NEXT_PUBLIC_WHATSAPP`, `NEXT_PUBLIC_CNPJ`, `NEXT_PUBLIC_RAZAO_SOCIAL`, `NEXT_PUBLIC_CONTATO_EMAIL` e `NEXT_PUBLIC_SITE_URL` (em Production, com `https://nhandu.tech`).
 
 ## Pedidos de diagnóstico
 
@@ -61,10 +78,12 @@ npm run test:mobile:visual   # compara cada seção com a imagem de referência
 Por padrão a suíte compila o site e sobe um servidor local. Para testar um endereço publicado, use `BASE_URL`:
 
 ```bash
-BASE_URL=https://nhanduproject.vercel.app npm run test:mobile
+BASE_URL=https://nhandu.tech npm run test:mobile
 ```
 
 Para rodar só no Chrome já instalado, sem baixar navegadores: `PW_CHANNEL=chrome npx playwright test layout states --project=chrome`.
+
+Falhas conhecidas das suítes `layout` e `states`: hoje elas apontam problemas vindos do `app/page.css`, gerado pelo canvas, a corrigir no canvas (não editar o arquivo gerado): campos do formulário de diagnóstico com fonte de 15px (o iPhone dá zoom ao focar), o botão `.btn-solid` saindo da tela em larguras estreitas e o alvo de toque `.st-mini` pequeno demais.
 
 O que cada teste de layout cobra, em cada largura:
 

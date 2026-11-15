@@ -1,5 +1,7 @@
+import { CONTACT_EMAIL } from '../lib/site.mjs';
+
 const CNPJ = process.env.NEXT_PUBLIC_CNPJ || '[CNPJ em registro]';
-const EMAIL = process.env.NEXT_PUBLIC_CONTATO_EMAIL || 'contato@nhandu.com.br';
+const EMAIL = CONTACT_EMAIL;
 
 export const legalInfo = { CNPJ, EMAIL };
 

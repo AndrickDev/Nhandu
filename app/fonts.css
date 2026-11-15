@@ -23,3 +23,7 @@ button[disabled]{opacity:.7;cursor:progress}
 .legal-in ul{padding-left:20px}
 .legal-in a{color:var(--a2)}
 .legal-in b{color:var(--tx);font-weight:500}
+
+/* LCP: o hero aparece já opaco; só desliza (duração, atraso e easing vêm de page.css). */
+@keyframes riseIn{from{transform:translateY(12px)}to{transform:none}}
+.hero .h1 span,.hero .hero-p{animation-name:riseIn}
