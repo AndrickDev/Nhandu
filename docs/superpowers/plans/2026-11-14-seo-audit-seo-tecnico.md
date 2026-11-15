@@ -32,7 +32,7 @@ Risco estimado: 3 → N de review estimado: 4 (o R1 recalcula com o diff real)
 | AC-8 | Sem env: `resolveSiteUrl({})` = `https://nhandu.tech`, `resolveContactEmail({})` = `contato@nhandu.tech`; `git grep -n "nhandu.com.br" -- . ':!docs/superpowers'` vazio | pedido (domínio) | domain.spec.js + comando |
 | AC-9 | `VERCEL_ENV=production`: host `nhanduproject.vercel.app` → 308 `https://nhandu.tech/<caminho>`; host `localhost` → 200; `productionRedirects` com preview/sem env → `[]` | proposto (G1) | redirect.spec.js |
 | AC-10 | Hero: animações de `.hero .h1 span` e `.hero .hero-p` sem keyframe de `opacity`, opacidade computada `1`; Lighthouse mobile local LCP < 2,5 s | audit T5 | hero.spec.js + Lighthouse (R8) |
-| AC-11 | `npm run build`, `npm run test:mobile` (Chrome) e `npm run test:seo` verdes | proposto (G1) | comandos |
+| AC-11 | `npm run build` e `npm run test:seo` verdes; `test:mobile` (layout + states, Chrome) sem falha nova: conjunto de falhas idêntico ao da BASE (45 preexistentes do `app/page.css` gerado; E1) | proposto (G1), alterado por E1 | comandos + diff da lista de falhas |
 | AC-12 | README atualizado: domínio, `test:seo`, passos manuais pós-deploy | proposto (G1) | leitura (R2/R8) |
 
 ## Review Focus
@@ -178,3 +178,4 @@ Interfaces:
 ## Emendas
 | # | Data | Tipo | Mudança | Motivo | Aprovação |
 |---|---|---|---|---|---|
+| E1 | 2026-11-14 | escopo (AC) | AC-11: `test:mobile` passa de "verde" para "sem falha nova (mesmo conjunto da BASE)" | 45 falhas preexistentes na BASE 9e41a7e (inputs 15px, `.btn-solid` fora da tela, `.st-mini`), vindas do CSS gerado; fora do escopo de SEO | usuário, 2026-11-14 ("A, pode seguir com o review") |
