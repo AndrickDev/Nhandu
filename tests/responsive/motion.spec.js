@@ -123,6 +123,8 @@ test('movimento: passo a passo ignora --vh', async ({ page }) => {
         sticky: document.querySelector('.sticky')?.getBoundingClientRect().height,
       }));
     const antes = await read();
+    expect(antes.track, `${width}px: .track ausente`).toBeGreaterThan(0);
+    expect(antes.sticky, `${width}px: .sticky ausente`).toBeGreaterThan(0);
     await page.evaluate(async () => {
       document.querySelector('.nh').style.setProperty('--vh', '2000px');
       await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
