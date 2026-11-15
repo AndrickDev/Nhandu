@@ -1,5 +1,10 @@
 import { test, expect } from '@playwright/test';
-import { format, heightFor, openAt } from './helpers';
+import { heightFor, openAt } from './helpers';
+
+// Mensagem de falha dos testes de movimento (o format() de helpers.js fala em "layout").
+function formatMotion(problems) {
+  return problems.length ? `\n${problems.length} problema(s) de movimento:\n  ${problems.join('\n  ')}\n` : '';
+}
 
 // Percorre a página de cima a baixo, em meia tela por vez, e junta o que `check` achar em cada passo.
 // O page.css liga scroll-behavior:smooth sem reduce; sem zerar, a amostra sairia num scrollY atrasado.
@@ -46,17 +51,20 @@ test.describe('movimento: seções inteiras na tela', () => {
           const r = el.getBoundingClientRect();
           if (r.bottom <= 0 || r.top >= window.innerHeight) continue;
           const cs = getComputedStyle(el);
-          const cls = '.' + String(el.className).trim().split(/\s+/).join('.');
+          const cls = '.' + (el.getAttribute('class') || '').trim().split(/\s+/).join('.');
           if (cs.clipPath !== 'none') out.push(`${cls} com clip-path ${cs.clipPath} em scrollY ${scrollY}`);
           if (parseFloat(cs.opacity) < 0.99) out.push(`${cls} com opacidade ${cs.opacity} em scrollY ${scrollY}`);
           if (cs.transform !== 'none') {
-            const m = cs.transform.match(/^matrix\(([^,]+),/);
-            if (m && parseFloat(m[1]) < 0.99) out.push(`${cls} com escala ${m[1]} em scrollY ${scrollY}`);
+            const m = new DOMMatrix(cs.transform);
+            if (m.a < 0.99 || m.d < 0.99) out.push(`${cls} com escala ${m.a}x${m.d} em scrollY ${scrollY}`);
+          }
+          if (cs.scale !== 'none' && cs.scale.split(/\s+/).some((v) => parseFloat(v) < 0.99)) {
+            out.push(`${cls} com escala (propriedade scale) ${cs.scale} em scrollY ${scrollY}`);
           }
         }
         return out;
       });
-      expect(problems, format(problems)).toEqual([]);
+      expect(problems, formatMotion(problems)).toEqual([]);
     });
   }
 });
@@ -84,15 +92,15 @@ test.describe('movimento: entradas não saem da tela', () => {
           if (r.bottom <= 0 || r.top >= window.innerHeight) continue;
           if (el.closest('.mq,[aria-hidden="true"]') || scrollsX(el)) continue;
           if (r.left < -1 || r.right > vw + 1) {
-            const cls = el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\s+/).join('.') : '';
+            const cls = '.' + (el.getAttribute('class') || '').trim().split(/\s+/).join('.');
             const sec = el.closest('section');
-            const secCls = sec && typeof sec.className === 'string' ? sec.className.trim().split(/\s+/).join('.') : '?';
+            const secCls = sec ? (sec.getAttribute('class') || '').trim().split(/\s+/).join('.') : '?';
             out.push(`${el.tagName.toLowerCase()}${cls} (em section.${secCls}) x ${Math.round(r.left)}..${Math.round(r.right)} (vw ${vw}) em scrollY ${scrollY}`);
           }
         }
         return out;
       });
-      expect(problems, format(problems)).toEqual([]);
+      expect(problems, formatMotion(problems)).toEqual([]);
     });
   }
 });
@@ -106,6 +114,8 @@ test.describe('movimento: rolagem só com transform e opacity', () => {
     test(`${width}px`, async ({ page }) => {
       test.setTimeout(120_000);
       await openForScroll(page, '/', width);
+      const supported = await page.evaluate(() => CSS.supports('animation-timeline: view()'));
+      test.skip(!supported, 'navegador sem animation-timeline');
       const forbidden = await scrollThrough(
         page,
         (_y, { allowed, svgOnly, skip }) => {
@@ -117,7 +127,7 @@ test.describe('movimento: rolagem só com transform e opacity', () => {
             for (const kf of a.effect?.getKeyframes?.() ?? []) for (const k of Object.keys(kf)) if (!skip.includes(k)) props.add(k);
             const bad = [...props].filter((p) => !allowed.includes(p) && !(svgOnly.includes(p) && t instanceof SVGElement));
             if (!bad.length) continue;
-            const sel = t ? t.tagName.toLowerCase() + (t.className && typeof t.className === 'string' ? '.' + t.className.trim().split(/\s+/).join('.') : '') : '?';
+            const sel = t ? t.tagName.toLowerCase() + '.' + (t.getAttribute('class') || '').trim().split(/\s+/).join('.') : '?';
             found.push(`${a.animationName} em ${sel} anima ${bad.join(', ')}`);
           }
           return found;
@@ -126,8 +136,6 @@ test.describe('movimento: rolagem só com transform e opacity', () => {
       );
       expect(forbidden, `\npropriedades proibidas em animações de rolagem:\n  ${forbidden.join('\n  ')}\n`).toEqual([]);
 
-      const supported = await page.evaluate(() => CSS.supports('animation-timeline: view()'));
-      if (!supported) return;
       const targets = [
         { sel: '.wd', expected: 'wInM' },
         { sel: '.split .sol-r', expected: 'rvIn' },
@@ -179,7 +187,7 @@ test.describe('movimento: reduzir movimento', () => {
         document
           .getAnimations()
           .filter((a) => a.playState === 'running' && a.effect?.target?.closest?.('.nh'))
-          .map((a) => `${a.animationName || a.transitionProperty || '?'} em ${a.effect.target.tagName.toLowerCase()}.${String(a.effect.target.className).trim().split(/\s+/).join('.')}`),
+          .map((a) => `${a.animationName || a.transitionProperty || '?'} em ${a.effect.target.tagName.toLowerCase()}.${(a.effect.target.getAttribute('class') || '').trim().split(/\s+/).join('.')}`),
       );
       expect(running, `\nanimações em execução com reduce:\n  ${running.join('\n  ')}\n`).toEqual([]);
     });
@@ -232,4 +240,7 @@ test('movimento: CTA fixo some com campo focado', async ({ page }) => {
   await expect(page.locator('.mcta')).toBeVisible();
   await page.locator('#f-nome').focus();
   await expect(page.locator('.mcta')).toBeHidden();
+  // Campo fora do formulário de diagnóstico (calculadora) não esconde o CTA.
+  await page.locator('#c-ticket').focus();
+  await expect(page.locator('.mcta')).toBeVisible();
 });

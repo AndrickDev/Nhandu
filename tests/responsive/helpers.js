@@ -168,7 +168,7 @@ export async function audit(page) {
     }
 
     // 7. Texto de botões e links não pode passar da própria caixa (o CTA que estoura o botão).
-    //    Texto dentro de um ancestral girado (o "+" do FAQ) fica de fora: a medida seria do glifo girado.
+    //    Texto dentro de um ancestral girado ou inclinado (o "+" do FAQ) fica de fora: a medida seria do glifo girado.
     for (const el of document.querySelectorAll('a,button,summary')) {
       if (ignored(el) || !visible(el) || getComputedStyle(el).display === 'inline') continue;
       const box = el.getBoundingClientRect();
@@ -177,7 +177,11 @@ export async function audit(page) {
         if (!node.nodeValue.trim()) continue;
         let rotated = false;
         for (let p = node.parentElement; p && p !== el; p = p.parentElement) {
-          if (getComputedStyle(p).transform !== 'none') rotated = true;
+          const tf = getComputedStyle(p).transform;
+          if (tf !== 'none') {
+            const m = new DOMMatrix(tf);
+            if (m.b !== 0 || m.c !== 0) rotated = true;
+          }
         }
         if (rotated) continue;
         const range = document.createRange();
