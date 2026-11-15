@@ -1,5 +1,21 @@
 import { test, expect } from '@playwright/test';
-import { resolveSiteUrl, resolveContactEmail, serializeJsonLd } from '../../lib/site.mjs';
+import { resolveSiteUrl, resolveContactEmail, resolveLegalName, serializeJsonLd } from '../../lib/site.mjs';
+
+test('accepts localhost', () => {
+  expect(resolveSiteUrl({ NEXT_PUBLIC_SITE_URL: 'http://localhost:3000' })).toBe('http://localhost:3000');
+});
+
+test('scheme is case-insensitive', () => {
+  expect(resolveSiteUrl({ NEXT_PUBLIC_SITE_URL: 'HTTPS://nhandu.tech/x' })).toBe('https://nhandu.tech');
+  // host diferente do fallback, para o teste não passar por coincidência
+  expect(resolveSiteUrl({ NEXT_PUBLIC_SITE_URL: 'HTTP://a.com/x' })).toBe('http://a.com');
+});
+
+test('legal name only when configured', () => {
+  expect(resolveLegalName({})).toBeNull();
+  expect(resolveLegalName({ NEXT_PUBLIC_RAZAO_SOCIAL: '   ' })).toBeNull();
+  expect(resolveLegalName({ NEXT_PUBLIC_RAZAO_SOCIAL: '  X Ltda ' })).toBe('X Ltda');
+});
 
 test('fallback without env', () => {
   expect(resolveSiteUrl({})).toBe('https://nhandu.tech');

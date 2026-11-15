@@ -20,6 +20,7 @@ test('config: sem produção não redireciona', () => {
 
 test('config: sem loop', () => {
   expect(productionRedirects({ vercelEnv: 'production', site: 'https://nhanduproject.vercel.app' })).toEqual([]);
+  expect(productionRedirects({ vercelEnv: 'production', site: 'http://localhost:3000' })).toEqual([]);
 });
 
 test('config: produção', () => {
