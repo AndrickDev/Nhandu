@@ -225,6 +225,7 @@
   .nt-hero-dir{min-height:620px}
   .nt-placas{display:none}
   .nt-sobre .nt-foto{max-width:380px}
+  .nt-nav{display:none}
 }
 @media (max-width:760px){
   .nt-wrap{padding:0 16px}
