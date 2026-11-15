@@ -61,3 +61,9 @@ O pedido: "revisão geral do design responsivo e correção" no celular, e anima
 - Medição no Chromium/WebKit desktop não representa a GPU do celular → AC por mecanismo (propriedades animadas) e por resultado visível (seções inteiras); relatório final declara que nada foi medido em aparelho.
 - Renomeação de classes numa reconversão do canvas → os testes de movimento e layout falham e apontam o seletor.
 - WebKit do Playwright sem `animation-timeline` → AC-5 condicionado a `CSS.supports`.
+
+## Ajustes depois da revisão do plano (P4, antes do G2)
+O plano é a referência de execução. Três pontos do design acima foram refinados nele:
+- L3 vale só até 1099px: `@media (max-width:1099px) and (max-height:649px)`, para não mudar o desktop com janela baixa.
+- O CTA fixo ignora os sliders da calculadora: `input:not([type=range]):focus`.
+- AC-9 é verificado em 375px (o CTA fixo só existe até 640px).
