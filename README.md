@@ -69,7 +69,7 @@ Suíte em Playwright (`tests/responsive/`) que confere o site em telas de celula
 
 ```bash
 npx playwright install chromium webkit   # uma vez, baixa os navegadores
-npm run test:mobile          # layout em cada largura + página em uso (perguntas abertas, calculadora, formulário)
+npm run test:mobile          # layout em cada largura + página em uso (perguntas abertas, calculadora, formulário) + movimento na rolagem
 npm run test:mobile:sweep    # varredura contínua de 320 a 480 px, de 2 em 2
 npm run test:mobile:update   # gera ou atualiza as imagens de referência
 npm run test:mobile:visual   # compara cada seção com a imagem de referência
@@ -81,9 +81,9 @@ Por padrão a suíte compila o site e sobe um servidor local. Para testar um end
 BASE_URL=https://nhandu.tech npm run test:mobile
 ```
 
-Para rodar só no Chrome já instalado, sem baixar navegadores: `PW_CHANNEL=chrome npx playwright test layout states --project=chrome`.
+Para rodar só no Chrome já instalado, sem baixar navegadores: `PW_CHANNEL=chrome npx playwright test layout states motion --project=chrome`.
 
-Falhas conhecidas das suítes `layout` e `states`: hoje elas apontam problemas vindos do `app/page.css`, gerado pelo canvas, a corrigir no canvas (não editar o arquivo gerado): campos do formulário de diagnóstico com fonte de 15px (o iPhone dá zoom ao focar), o botão `.btn-solid` saindo da tela em larguras estreitas e o alvo de toque `.st-mini` pequeno demais.
+Ajustes de celular e tablet ficam em `app/mobile.css`, mantido à mão e importado depois do `app/page.css` gerado: corrija ali o que vier do canvas, sem editar o arquivo gerado.
 
 O que cada teste de layout cobra, em cada largura:
 
@@ -92,6 +92,19 @@ O que cada teste de layout cobra, em cada largura:
 - nenhum texto de botão ou título é cortado;
 - alvos de toque com 24 px ou mais, ou com folga até o vizinho;
 - nenhuma fonte abaixo de 10 px;
-- campos de formulário com 16 px ou mais (abaixo disso o Safari do iPhone dá zoom ao focar).
+- campos de formulário com 16 px ou mais (abaixo disso o Safari do iPhone dá zoom ao focar);
+- nenhum botão, link ou resumo com texto além da própria caixa (`texto-transborda`).
+
+Páginas cobertas: home, privacidade, termos, demo (`/demo/nutricao`) e briefing (`/briefing/nutricao`).
+
+O que cada teste de movimento (`motion`) cobra, com a animação ligada:
+
+- seções inteiras na tela: até 1099 px nenhuma seção visível fica cortada, transparente ou reduzida durante a rolagem;
+- rolagem só com transform e opacity: as animações ligadas à rolagem não animam propriedades que forçam repintura, e os alvos conhecidos usam os keyframes leves;
+- passo a passo ignora `--vh`: a altura do bloco fixo não muda quando `--vh` muda, até 1099 px;
+- reduzir movimento: com `prefers-reduced-motion: reduce` nenhuma animação roda dentro da página;
+- desktop intacto: em 1280 px as animações e o comportamento originais continuam;
+- hero: as abas de segmento não cobrem o cartão de agenda;
+- CTA fixo some com campo focado, em 375 px.
 
 Larguras, páginas e limites ficam em `tests/responsive/helpers.js`. As imagens de referência ficam em `tests/responsive/__screenshots__/` e valem só para o sistema que as gerou. O relatório com imagens e passo a passo de cada falha abre com `npx playwright show-report`.
