@@ -31,7 +31,7 @@ Risco estimado: 3 → N de review estimado: 4 (o R1 recalcula com o diff real)
 | AC-7 | Home: exatamente 1 JSON-LD válido com `@graph` contendo Organization (name, url, logo), WebSite (url, inLanguage pt-BR), Service (provider.@id = Organization.@id); conteúdo do script sem `<` literal | proposto (G1) | metadata.spec.js › json-ld |
 | AC-8 | Sem env: `resolveSiteUrl({})` = `https://nhandu.tech`, `resolveContactEmail({})` = `contato@nhandu.tech`; `git grep -n "nhandu.com.br" -- . ':!docs/superpowers'` vazio | pedido (domínio) | domain.spec.js + comando |
 | AC-9 | `VERCEL_ENV=production`: host `nhanduproject.vercel.app` → 308 `https://nhandu.tech/<caminho>`; host `localhost` → 200; `productionRedirects` com preview/sem env → `[]` | proposto (G1) | redirect.spec.js |
-| AC-10 | Hero: animações de `.hero .h1 span` e `.hero .hero-p` sem keyframe de `opacity`, opacidade computada `1`; Lighthouse mobile local LCP < 2,5 s | audit T5 | hero.spec.js + Lighthouse (R8) |
+| AC-10 | Hero: animações de `.hero .h1 span` e `.hero .hero-p` sem keyframe de `opacity`, opacidade computada `1`; Lighthouse mobile local com throttling real (`--throttling-method=devtools`): LCP < 2,5 s (o modo simulado fica registrado só como referência; E2) | audit T5, alterado por E2 | hero.spec.js + Lighthouse (R8) |
 | AC-11 | `npm run build` e `npm run test:seo` verdes; `test:mobile` (layout + states, Chrome) sem falha nova: conjunto de falhas idêntico ao da BASE (45 preexistentes do `app/page.css` gerado; E1) | proposto (G1), alterado por E1 | comandos + diff da lista de falhas |
 | AC-12 | README atualizado: domínio, `test:seo`, passos manuais pós-deploy | proposto (G1) | leitura (R2/R8) |
 
@@ -39,10 +39,10 @@ Risco estimado: 3 → N de review estimado: 4 (o R1 recalcula com o diff real)
 - Redirect por host: regex de host ancorada e escapada; sem loop quando `SITE` é `*.vercel.app`; previews intactos (teste em T04).
 - Merge raso da Metadata API: páginas que definem `openGraph` não podem perder `images` (teste em T02 › open graph).
 - JSON-LD: escape de `<` (teste em T02 › json-ld).
-- Fallback de URL inválida (`NEXT_PUBLIC_SITE_URL=lixo`) cai em `https://nhandu.tech` (teste em T01).
+- URL inválida é ignorada e a cadeia segue (`NEXT_PUBLIC_SITE_URL` → `VERCEL_PROJECT_PRODUCTION_URL` → `https://nhandu.tech`); sem nenhuma válida, `https://nhandu.tech` (teste em T01; texto esclarecido em E2).
 
 ## Checks canônicos
-Lint: n/a (sem script) · Tipos: n/a (sem script) · Testes: `npm run test:seo` e `PW_CHANNEL=chrome npx playwright test layout states --project=chrome` · Build: `npm run build` · E2E: as próprias suítes Playwright · Lighthouse: `npx -y lighthouse@12.8.2 http://localhost:3200/ --form-factor=mobile --only-categories=performance` (R8, servidor de produção local)
+Lint: n/a (sem script) · Tipos: n/a (sem script) · Testes: `npm run test:seo` e `PW_CHANNEL=chrome npx playwright test layout states --project=chrome` · Build: `npm run build` · E2E: as próprias suítes Playwright · Lighthouse: `npx -y lighthouse@12.8.2 http://localhost:3200/ --form-factor=mobile --throttling-method=devtools --only-categories=performance` (R8, servidor de produção local; E2)
 
 ## Fora de escopo
 - Páginas por segmento, blog, copy visível (H1/headings), WebP/lazy no JSX gerado, FAQPage.
@@ -179,3 +179,4 @@ Interfaces:
 | # | Data | Tipo | Mudança | Motivo | Aprovação |
 |---|---|---|---|---|---|
 | E1 | 2026-11-14 | escopo (AC) | AC-11: `test:mobile` passa de "verde" para "sem falha nova (mesmo conjunto da BASE)" | 45 falhas preexistentes na BASE 9e41a7e (inputs 15px, `.btn-solid` fora da tela, `.st-mini`), vindas do CSS gerado; fora do escopo de SEO | usuário, 2026-11-14 ("A, pode seguir com o review") |
+| E2 | 2026-11-14 | escopo (AC) + texto | AC-10: medição do LCP com `--throttling-method=devtools`; texto do Review Focus sobre URL inválida alinhado à interface de T01 | R2 (A-1): o modo simulado (lantern) não modela o atraso de renderização por opacidade (HEAD: LCP observado = FCP = 221 ms; simulado 4,7 s); com throttling real, BASE 3,4 s → HEAD 1,8 s. R2 (A-3): o RF contradizia a cadeia de prioridade definida na interface | decidido por delegação em 2026-11-14 (coordenador); checkpoint emenda no chat |
