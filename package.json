@@ -5,7 +5,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "convert": "python3 tools/convert.py"
+    "convert": "python3 tools/convert.py",
+    "test:mobile": "playwright test layout states",
+    "test:mobile:sweep": "SWEEP=1 playwright test layout",
+    "test:mobile:visual": "playwright test visual",
+    "test:mobile:update": "playwright test visual --update-snapshots"
   },
   "dependencies": {
     "next": "15.5.29",
@@ -13,6 +17,7 @@
     "react-dom": "^19.1.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.0",
     "@types/node": "^22.7.5",
     "@types/react": "^19.1.12",
     "typescript": "^5.6.3"
