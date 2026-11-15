@@ -61,6 +61,42 @@ test.describe('movimento: seções inteiras na tela', () => {
   }
 });
 
+test.describe('movimento: entradas não saem da tela', () => {
+  test.use({ reducedMotion: 'no-preference' });
+  for (const width of MOBILE_WIDTHS) {
+    test(`${width}px`, async ({ page }) => {
+      test.setTimeout(120_000);
+      await openForScroll(page, '/', width);
+      const problems = await scrollThrough(page, (scrollY) => {
+        const out = [];
+        const vw = document.documentElement.clientWidth;
+        const scrollsX = (el) => {
+          for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) {
+            const ox = getComputedStyle(a).overflowX;
+            if ((ox === 'auto' || ox === 'scroll') && a.scrollWidth > a.clientWidth) return true;
+          }
+          return false;
+        };
+        for (const el of document.querySelectorAll('.nh main h1,.nh main h2,.nh main h3,.nh main h4,.nh main p,.nh main li,.nh main a,.nh main button')) {
+          if (!el.checkVisibility({ checkVisibilityCSS: true })) continue;
+          const r = el.getBoundingClientRect();
+          if (r.width <= 0 || r.height <= 0) continue;
+          if (r.bottom <= 0 || r.top >= window.innerHeight) continue;
+          if (el.closest('.mq,[aria-hidden="true"]') || scrollsX(el)) continue;
+          if (r.left < -1 || r.right > vw + 1) {
+            const cls = el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\s+/).join('.') : '';
+            const sec = el.closest('section');
+            const secCls = sec && typeof sec.className === 'string' ? sec.className.trim().split(/\s+/).join('.') : '?';
+            out.push(`${el.tagName.toLowerCase()}${cls} (em section.${secCls}) x ${Math.round(r.left)}..${Math.round(r.right)} (vw ${vw}) em scrollY ${scrollY}`);
+          }
+        }
+        return out;
+      });
+      expect(problems, format(problems)).toEqual([]);
+    });
+  }
+});
+
 test.describe('movimento: rolagem só com transform e opacity', () => {
   test.use({ reducedMotion: 'no-preference' });
   const ALLOWED = ['transform', 'opacity', 'translate', 'scale', 'rotate'];

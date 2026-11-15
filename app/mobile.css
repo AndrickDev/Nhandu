@@ -26,8 +26,8 @@
   @supports (animation-timeline: view()){
     /* .zi, .zo e .reveal não estão no markup atual; entram por precaução contra reconversão. */
     .fold,.zi,.zo,.open,.circ,.reveal,.lift{animation:none!important;clip-path:none!important}
-    /* Só troca o keyframe; mantém timeline e range do page.css. */
-    .split .sol-r,.tmc img{animation-name:rvIn}
+    /* Só troca o keyframe; mantém timeline e range do page.css. .sol-l usa splitL (translateX -60px), que corta o texto em uma coluna. */
+    .split .sol-l,.split .sol-r,.tmc img{animation-name:rvIn}
     @keyframes wInM{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
     .wd{animation-name:wInM}
   }
