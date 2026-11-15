@@ -100,6 +100,7 @@ Páginas cobertas: home, privacidade, termos, demo (`/demo/nutricao`) e briefing
 O que cada teste de movimento (`motion`) cobra, com a animação ligada:
 
 - seções inteiras na tela: até 1099 px nenhuma seção visível fica cortada, transparente ou reduzida durante a rolagem;
+- entradas não saem da tela: nenhum título, texto, link ou botão passa da borda lateral enquanto entra com a animação;
 - rolagem só com transform e opacity: as animações ligadas à rolagem não animam propriedades que forçam repintura, e os alvos conhecidos usam os keyframes leves;
 - passo a passo ignora `--vh`: a altura do bloco fixo não muda quando `--vh` muda, até 1099 px;
 - reduzir movimento: com `prefers-reduced-motion: reduce` nenhuma animação roda dentro da página;
