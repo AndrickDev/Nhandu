@@ -4,6 +4,8 @@ export const PAGES = [
   { name: 'home', path: '/' },
   { name: 'privacidade', path: '/privacidade' },
   { name: 'termos', path: '/termos' },
+  { name: 'demo-nutricao', path: '/demo/nutricao' },
+  { name: 'briefing-nutricao', path: '/briefing/nutricao' },
 ];
 
 // Larguras de tela (CSS px) dos aparelhos em uso: iPhone SE antigo, Galaxy Fold fechado,
@@ -163,6 +165,33 @@ export async function audit(page) {
       if (!visible(el)) continue;
       const size = parseFloat(getComputedStyle(el).fontSize);
       if (size < 16) report('campo-com-zoom-no-iphone', el, `está com ${size}px`);
+    }
+
+    // 7. Texto de botões e links não pode passar da própria caixa (o CTA que estoura o botão).
+    //    Texto dentro de um ancestral girado (o "+" do FAQ) fica de fora: a medida seria do glifo girado.
+    for (const el of document.querySelectorAll('a,button,summary')) {
+      if (ignored(el) || !visible(el) || getComputedStyle(el).display === 'inline') continue;
+      const box = el.getBoundingClientRect();
+      const tw = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      for (let node = tw.nextNode(); node; node = tw.nextNode()) {
+        if (!node.nodeValue.trim()) continue;
+        let rotated = false;
+        for (let p = node.parentElement; p && p !== el; p = p.parentElement) {
+          if (getComputedStyle(p).transform !== 'none') rotated = true;
+        }
+        if (rotated) continue;
+        const range = document.createRange();
+        range.selectNodeContents(node);
+        const t = range.getBoundingClientRect();
+        if (t.width > 0 && (t.right > box.right + 1 || t.left < box.left - 1)) {
+          report(
+            'texto-transborda',
+            el,
+            `texto vai de ${Math.round(t.left)} a ${Math.round(t.right)}px e a caixa de ${Math.round(box.left)} a ${Math.round(box.right)}px`,
+          );
+          break;
+        }
+      }
     }
 
     return problems;
