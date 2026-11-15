@@ -16,6 +16,12 @@ export default defineConfig({
     url: `http://localhost:${PORT}`,
     reuseExistingServer: false,
     timeout: 240_000,
-    env: { VERCEL_ENV: 'production', NEXT_PUBLIC_SITE_URL: 'https://nhandu.tech' },
+    env: {
+      VERCEL_ENV: 'production',
+      NEXT_PUBLIC_SITE_URL: 'https://nhandu.tech',
+      // F-001: valor com `</script>` para provar o escape do JSON-LD no HTML real.
+      // Se mudar aqui, mude também LEGAL_NAME_TESTE em tests/seo/metadata.spec.js.
+      NEXT_PUBLIC_RAZAO_SOCIAL: 'Nhandu </script><b>teste</b>',
+    },
   },
 });

@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
 
+// Mesmo valor de NEXT_PUBLIC_RAZAO_SOCIAL em playwright.seo.config.js (F-001).
+const LEGAL_NAME_TESTE = 'Nhandu </script><b>teste</b>';
 const HOME = 'https://nhandu.tech/';
 const PAGES = [
   ['/', HOME],
@@ -71,6 +73,8 @@ test('json-ld', async ({ page, request }) => {
   expect(org.name).toBeTruthy();
   expect(org.url).toBeTruthy();
   expect(org.logo).toBeTruthy();
+  // JSON.parse recupera o `</script>` intacto a partir do HTML escapado.
+  expect(org.legalName).toBe(LEGAL_NAME_TESTE);
   const site = graph.find((i) => i['@type'] === 'WebSite');
   expect(site.url).toBeTruthy();
   expect(site.inLanguage).toBe('pt-BR');
@@ -81,4 +85,6 @@ test('json-ld', async ({ page, request }) => {
   const m = html.match(/application\/ld\+json">([\s\S]*?)<\/script>/);
   expect(m).not.toBeNull();
   expect(m[1]).not.toContain('<');
+  // O `</script>` do dado aparece escapado dentro do bloco, sem fechar a tag.
+  expect(m[1]).toContain('\\u003c/script>');
 });
