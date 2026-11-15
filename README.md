@@ -45,3 +45,34 @@ npm run build
 - Trocar a faixa de segmentos pelas logos dos clientes piloto.
 - Revisar Privacidade e Termos com um advogado antes de anunciar.
 - Adicionar o Pixel da Meta e o Google Analytics quando começarem os anúncios (com aviso de cookies).
+
+## Testes de responsividade mobile
+
+Suíte em Playwright (`tests/responsive/`) que confere o site em telas de celular e tablet, no Chrome e no Safari (WebKit).
+
+```bash
+npx playwright install chromium webkit   # uma vez, baixa os navegadores
+npm run test:mobile          # layout em cada largura + página em uso (perguntas abertas, calculadora, formulário)
+npm run test:mobile:sweep    # varredura contínua de 320 a 480 px, de 2 em 2
+npm run test:mobile:update   # gera ou atualiza as imagens de referência
+npm run test:mobile:visual   # compara cada seção com a imagem de referência
+```
+
+Por padrão a suíte compila o site e sobe um servidor local. Para testar um endereço publicado, use `BASE_URL`:
+
+```bash
+BASE_URL=https://nhanduproject.vercel.app npm run test:mobile
+```
+
+Para rodar só no Chrome já instalado, sem baixar navegadores: `PW_CHANNEL=chrome npx playwright test layout states --project=chrome`.
+
+O que cada teste de layout cobra, em cada largura:
+
+- a página não rola para os lados;
+- nenhum botão, link, título ou texto passa da borda da tela;
+- nenhum texto de botão ou título é cortado;
+- alvos de toque com 24 px ou mais, ou com folga até o vizinho;
+- nenhuma fonte abaixo de 10 px;
+- campos de formulário com 16 px ou mais (abaixo disso o Safari do iPhone dá zoom ao focar).
+
+Larguras, páginas e limites ficam em `tests/responsive/helpers.js`. As imagens de referência ficam em `tests/responsive/__screenshots__/` e valem só para o sistema que as gerou. O relatório com imagens e passo a passo de cada falha abre com `npx playwright show-report`.
