@@ -1,6 +1,15 @@
 import Legal, { legalInfo } from '../../components/Legal';
+import { OG_BASE } from '../../lib/site.mjs';
 
-export const metadata = { title: 'Termos de Uso — Nhandu' };
+const TITLE = 'Termos de Uso — Nhandu';
+const DESCRIPTION = 'Regras de uso do site da Nhandu: calculadora, exemplos, limites do agente de IA, propriedade intelectual e contato.';
+
+export const metadata = {
+  title: TITLE,
+  description: DESCRIPTION,
+  alternates: { canonical: '/termos' },
+  openGraph: { ...OG_BASE, url: '/termos', title: TITLE, description: DESCRIPTION },
+};
 
 export default function Termos() {
   const { CNPJ, EMAIL } = legalInfo;

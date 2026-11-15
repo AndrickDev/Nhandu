@@ -1,6 +1,15 @@
 import Legal, { legalInfo } from '../../components/Legal';
+import { OG_BASE } from '../../lib/site.mjs';
 
-export const metadata = { title: 'Política de Privacidade — Nhandu' };
+const TITLE = 'Política de Privacidade — Nhandu';
+const DESCRIPTION = 'Como a Nhandu trata os dados pessoais coletados no site e nos atendimentos, conforme a LGPD, e como exercer os seus direitos.';
+
+export const metadata = {
+  title: TITLE,
+  description: DESCRIPTION,
+  alternates: { canonical: '/privacidade' },
+  openGraph: { ...OG_BASE, url: '/privacidade', title: TITLE, description: DESCRIPTION },
+};
 
 export default function Privacidade() {
   const { CNPJ, EMAIL } = legalInfo;
