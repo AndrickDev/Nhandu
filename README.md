@@ -112,4 +112,12 @@ O que cada teste de movimento (`motion`) cobra, com a animação ligada:
 - hero: as abas de segmento não cobrem o cartão de agenda;
 - CTA fixo some com campo focado, em 375 px.
 
+O que cada teste do refino mobile (`refino`) cobra, de 320 a 640 px:
+
+- hero: o fundo ASCII começa abaixo do texto e tem máscara vertical e lateral; o selo "PARA QUEM" fica em 1 linha;
+- hero: as 4 abas formam um controle segmentado de 1 linha, com alvos de 44 px, acima do celular; o cartão de agenda fica sob o celular sem vazio e aparece até 2 s depois de trocar de aba;
+- calculadora: a seta do botão fica junto ao texto, e o botão tem 1 linha a partir de 430 px;
+- camadas: o título tem 64 px de respiro; na "Revisão da página" (passo 2) só a versão aprovada aparece, com os pinos presos à imagem e ao botão, em 390x664, 375x553 e 320x568;
+- cartões `.fcard` sem vazio interno; seções com 72 px de padding e títulos `.rv` totalmente visíveis a 75% da altura da tela.
+
 Larguras, páginas e limites ficam em `tests/responsive/helpers.js`. As imagens de referência ficam em `tests/responsive/__screenshots__/` e valem só para o sistema que as gerou. O relatório com imagens e passo a passo de cada falha abre com `npx playwright show-report`.

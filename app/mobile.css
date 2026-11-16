@@ -9,11 +9,56 @@
 /* L3: alvo de toque .st-mini pequeno demais em paisagem baixa (desktop baixo intocado). */
 @media (max-width:1099px) and (max-height:649px){.st-mini{min-height:24px}}
 
-/* L4: abas do hero (.ptabs) quebram em 2 linhas e cobrem o cartão de agenda. */
-@media (max-width:640px){.panel .agc{bottom:62px}}
+/* L4: painel do hero em fluxo. Abas viram controle segmentado acima do celular (HIG: alvo 44pt, 4 segmentos de largura igual), agenda empilhada sob o celular. */
+@media (max-width:640px){
+  .panel{height:auto;display:flex;flex-direction:column;align-items:stretch}
+  .panel .ptabs,.panel .phone,.panel .agc{position:relative;inset:auto}
+  .panel .ptabs{order:-1;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;flex-wrap:nowrap;gap:2px;padding:4px;border-radius:999px;background:var(--bg3)}
+  .panel .ptabs button{min-height:44px;min-width:0;padding:0 4px;border:0;border-radius:999px;background:transparent;color:var(--tx2);font-size:13px;white-space:nowrap}
+  .panel .ptabs button.on{background:var(--bg);color:var(--tx);font-weight:600;box-shadow:0 1px 3px rgba(26,24,20,.18),0 0 0 .5px rgba(26,24,20,.08)}
+  .panel .phone{align-self:center;margin-top:16px}
+  .panel .toast{top:84px}
+  /* animation-delay em longhand: o shorthand zeraria a timeline do page.css. Termina em 1,8s. */
+  .panel .agc{width:auto;margin:-40px 10px 0;z-index:2;animation-delay:1s}
+}
+@media (max-width:359px){.panel .ptabs{grid-auto-columns:auto}.panel .ptabs button{font-size:12px}}
 
-/* L5: texto do CTA da calculadora transborda a caixa do botão. */
-@media (max-width:640px){.cta-big{white-space:normal;text-align:center;line-height:1.25;height:auto;padding-top:12px;padding-bottom:12px}}
+/* L7: fundo ASCII do hero só na faixa do painel, com máscara vertical e lateral (o texto fica sobre fundo limpo). */
+@media (max-width:640px){
+  .hero-bg{top:auto;bottom:0;height:800px;
+    -webkit-mask-image:linear-gradient(to bottom,transparent,#000 18%,#000 82%,transparent),linear-gradient(90deg,transparent,transparent 14%,#000 34%,#000 66%,transparent 86%,transparent);
+    mask-image:linear-gradient(to bottom,transparent,#000 18%,#000 82%,transparent),linear-gradient(90deg,transparent,transparent 14%,#000 34%,#000 66%,transparent 86%,transparent);
+    -webkit-mask-composite:source-in;mask-composite:intersect}
+  /* O selo "PARA QUEM" não quebra em 2 linhas. */
+  .pill{align-items:center}
+  .pill b{white-space:nowrap;flex:none}
+}
+
+/* L5: texto do CTA da calculadora transborda a caixa do botão; a seta acompanha a última palavra. */
+@media (max-width:640px){
+  .cta-big{display:block;white-space:normal;text-align:center;font-size:15.5px;text-wrap:balance;line-height:1.25;height:auto;padding:18px 20px}
+  .cta-big .arr{display:inline-block;margin-left:6px}
+}
+
+/* L8: título de #camadas colado no topo da seção escura. */
+@media (max-width:640px){#camadas .layers-intro{padding-top:72px}}
+
+/* L9: "Revisão da página" no celular: só a versão aprovada, pinos presos à imagem e ao botão. */
+@media (max-width:640px){
+  .lv.lv1 .wf,.lv.lv1 .to{display:none}
+  .lv.lv1 .fin{height:auto;min-height:0;padding-bottom:28px}
+  .lv.lv1 .fin-h{max-width:58%;min-height:2.1em}
+  .lv.lv1 .fin .pin{margin:0 !important}
+  .lv.lv1 .fin .pin:nth-of-type(2){top:28px !important;right:4px !important;left:auto !important}
+  .lv.lv1 .fin .pin:nth-of-type(3){top:93px !important;left:118px !important}
+}
+
+/* L10: cartões sem vazio interno e ritmo vertical menor. */
+@media (max-width:640px){
+  .fcard{min-height:0;gap:16px;justify-content:flex-start}
+  .fast{padding-bottom:72px}
+  .sec{padding:72px 0}
+}
 
 /* M3: altura do passo a passo segue a janela (svh, 400 a 1200 como o JS), não o --vh que muda na rolagem. */
 @media (max-width:1099px){.track{height:calc(clamp(400px,100svh,1200px) - 68px + 2800px)}.sticky{height:calc(clamp(400px,100svh,1200px) - 68px)}}
@@ -30,5 +75,11 @@
     .split .sol-l,.split .sol-r,.tmc img{animation-name:rvIn}
     @keyframes wInM{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
     .wd{animation-name:wInM}
+  }
+}
+/* Títulos .rv chegam a opacidade 1 antes de passar da metade da tela. */
+@media (max-width:1099px) and (prefers-reduced-motion:no-preference){
+  @supports (animation-timeline: view()){
+    .nh .rv{animation-range:entry 0% entry 70% !important}
   }
 }

@@ -236,11 +236,21 @@ test.describe('movimento: hero: abas não cobrem o cartão de agenda', () => {
 });
 
 test('movimento: CTA fixo some com campo focado', async ({ page }) => {
-  await openAt(page, '/', 375, 780);
-  await expect(page.locator('.mcta')).toBeVisible();
-  await page.locator('#f-nome').focus();
-  await expect(page.locator('.mcta')).toBeHidden();
+  await openForScroll(page, '/', 375, 780);
+  // Parte do topo de #pratica: longe de outros CTAs, para o teste não depender de onde a página para.
+  await page.evaluate(async () => {
+    document.querySelector('#pratica').scrollIntoView({ block: 'start' });
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  });
+  const cta = page.locator('.mcta');
+  await expect(cta).toBeVisible();
+  const state = () => cta.evaluate((el) => ({ opacity: parseFloat(getComputedStyle(el).opacity), pe: getComputedStyle(el).pointerEvents }));
+  const visible = await state();
+  expect(visible.opacity).toBeGreaterThan(0.95);
+  expect(visible.pe).not.toBe('none');
+  await page.evaluate(() => document.querySelector('#f-nome').focus({ preventScroll: true }));
+  await expect(cta).toBeHidden();
   // Campo fora do formulário de diagnóstico (calculadora) não esconde o CTA.
-  await page.locator('#c-ticket').focus();
-  await expect(page.locator('.mcta')).toBeVisible();
+  await page.evaluate(() => document.querySelector('#c-ticket').focus({ preventScroll: true }));
+  await expect(cta).toBeVisible();
 });
