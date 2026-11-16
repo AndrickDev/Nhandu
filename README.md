@@ -69,7 +69,7 @@ Suíte em Playwright (`tests/responsive/`) que confere o site em telas de celula
 
 ```bash
 npx playwright install chromium webkit   # uma vez, baixa os navegadores
-npm run test:mobile          # layout em cada largura + página em uso (perguntas abertas, calculadora, formulário) + movimento na rolagem
+npm run test:mobile          # layout em cada largura + página em uso (perguntas abertas, calculadora, formulário) + movimento na rolagem + ajustes de celular (refino) + demo mobile e CTA fixo (enhance)
 npm run test:mobile:sweep    # varredura contínua de 320 a 480 px, de 2 em 2
 npm run test:mobile:update   # gera ou atualiza as imagens de referência
 npm run test:mobile:visual   # compara cada seção com a imagem de referência
@@ -85,7 +85,7 @@ Por padrão a suíte compila o site e sobe um servidor local. Para testar um end
 BASE_URL=https://nhandu.tech npm run test:mobile
 ```
 
-Para rodar só no Chrome já instalado, sem baixar navegadores: `PW_CHANNEL=chrome npx playwright test layout states motion --project=chrome`.
+Para rodar só no Chrome já instalado, sem baixar navegadores: `PW_CHANNEL=chrome npx playwright test layout states motion refino enhance --project=chrome`.
 
 Ajustes de celular e tablet ficam em `app/mobile.css`, mantido à mão e importado depois do `app/page.css` gerado: corrija ali o que vier do canvas, sem editar o arquivo gerado.
 

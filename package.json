@@ -6,7 +6,7 @@
     "build": "next build",
     "start": "next start",
     "convert": "python3 tools/convert.py",
-    "test:mobile": "playwright test layout states motion",
+    "test:mobile": "playwright test layout states motion refino enhance",
     "test:mobile:sweep": "SWEEP=1 playwright test layout",
     "test:seo": "playwright test -c playwright.seo.config.js",
     "test:mobile:visual": "playwright test visual",
