@@ -191,3 +191,63 @@ test.describe('CTA fixo: some perto de CTA equivalente', () => {
     expect((await state()).opacity, 'voltou a aparecer').toBe(1);
   });
 });
+
+// Review F-001: texto de 11 px dos chips da ficha precisa de contraste WCAG AA (4,5:1).
+test.describe('demo mobile: contraste dos chips da ficha', () => {
+  test.use({ reducedMotion: 'reduce' });
+  test('390px', async ({ page }) => {
+    await openForScroll(page, 390, 844);
+    const chips = await page.evaluate(() => {
+      const parse = (s) => {
+        const m = s.match(/[\d.]+/g).map(Number);
+        return { r: m[0], g: m[1], b: m[2], a: m.length > 3 ? m[3] : 1 };
+      };
+      const over = (top, bot) => ({
+        r: top.r * top.a + bot.r * (1 - top.a),
+        g: top.g * top.a + bot.g * (1 - top.a),
+        b: top.b * top.a + bot.b * (1 - top.a),
+        a: 1,
+      });
+      const lum = ({ r, g, b }) => {
+        const f = (v) => ((v /= 255) <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4));
+        return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+      };
+      const el = document.querySelector('.vframe .m-chip');
+      const saved = el.className;
+      const out = ['m-n', 'm-q', 'm-ok'].map((state) => {
+        el.className = `m-chip on ${state}`;
+        const cs = getComputedStyle(el);
+        const card = parse(getComputedStyle(el.closest('.m-ficha')).backgroundColor);
+        const bg = over(parse(cs.backgroundColor), card);
+        const fg = parse(cs.color);
+        const [a, b] = [lum(fg), lum(bg)].sort((x, y) => y - x);
+        return { cls: state, size: parseFloat(cs.fontSize), ratio: (a + 0.05) / (b + 0.05) };
+      });
+      el.className = saved;
+      return out;
+    });
+    expect(chips.length).toBeGreaterThanOrEqual(3);
+    for (const c of chips) expect(c.ratio, `${c.cls} (${c.size}px) razão ${c.ratio.toFixed(2)}`).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+// Review F-002: com o CTA fixo escondido, o foco por teclado não pode cair num controle invisível.
+test.describe('CTA fixo: foco por teclado revela o CTA escondido', () => {
+  test.use({ reducedMotion: 'no-preference' });
+  test('375x780', async ({ page }) => {
+    await openForScroll(page, 375, 780);
+    await page.waitForTimeout(700);
+    expect(await page.evaluate(() => document.documentElement.dataset.mcta), 'precisa estar escondido no topo').toBe('off');
+    await page.locator('.mcta').focus();
+    await page.waitForTimeout(700);
+    expect(await page.evaluate(() => document.documentElement.dataset.mcta), 'segue escondido ao focar').toBe('off');
+    const s = await page.locator('.mcta').evaluate((el) => ({
+      focused: document.activeElement === el,
+      opacity: parseFloat(getComputedStyle(el).opacity),
+      pe: getComputedStyle(el).pointerEvents,
+    }));
+    expect(s.focused).toBe(true);
+    expect(s.opacity, 'opacidade com foco').toBeGreaterThanOrEqual(0.95);
+    expect(s.pe).not.toBe('none');
+  });
+});

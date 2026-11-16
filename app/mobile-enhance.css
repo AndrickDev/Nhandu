@@ -5,6 +5,7 @@
   /* CTA fixo: some quando há um CTA equivalente na tela (html[data-mcta="off"], posto pelo MobileEnhance). */
   .nh .mcta{bottom:max(12px, env(safe-area-inset-bottom));transition:opacity .25s ease,transform .3s cubic-bezier(.2,.7,.2,1)}
   html[data-mcta="off"] .nh .mcta{opacity:0;transform:translateY(16px);pointer-events:none}
+  html[data-mcta="off"] .nh .mcta:focus-visible{opacity:1;transform:none;pointer-events:auto}
 
   /* Quadro do vídeo vira a demo vertical. A altura mínima evita pulo de layout antes de a demo montar. */
   .nh .vframe{aspect-ratio:auto;padding:14px;min-height:700px}
@@ -55,8 +56,8 @@
   .nh .m-chip{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.04em;text-transform:uppercase;padding:3px 9px;border-radius:999px;opacity:0;transition:opacity .45s ease;white-space:nowrap}
   .nh .m-chip.on{opacity:1}
   .nh .m-chip.m-n{background:var(--bg3);color:var(--tx2)}
-  .nh .m-chip.m-q{background:rgba(200,67,30,.1);color:#C8431E}
-  .nh .m-chip.m-ok{background:var(--okbg);color:var(--ok)}
+  .nh .m-chip.m-q{background:rgba(200,67,30,.1);color:#A8361A}
+  .nh .m-chip.m-ok{background:var(--okbg);color:#23603F}
   .nh .m-title{position:relative;height:34px;margin-top:2px}
   .nh .m-title > span{position:absolute;left:0;top:0;line-height:34px}
   .nh .m-name{font-family:'Newsreader',serif;font-size:24px;letter-spacing:-.01em;white-space:nowrap}
