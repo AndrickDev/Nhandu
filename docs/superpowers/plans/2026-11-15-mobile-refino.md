@@ -185,3 +185,8 @@ Passo do controlador depois da onda 3: build de produção em :3100; `npx playwr
 - Files: `components/MobileEnhance.jsx` (CTA_TARGETS), `tests/responsive/enhance.spec.js` (CTA fixo: some em todo o hero, 320×568 e 390×844).
 - Fora: foto de #time (opção c) não entra.
 - Ajuste de teste (F-012): `tests/responsive/visual.spec.js` esconde cabeçalho e CTA fixos nas capturas de seção (`tests/responsive/visual-overlays.css`), porque a posição deles dependia da rolagem da captura e 10 casos falhavam já na HEAD 9a493a6.
+
+## Emenda 2 (2026-11-16, decisão do usuário "e" → F-006 opção c)
+- AC-8 ampliado: o CTA fixo some enquanto uma foto do time (`#time .tmc img`) passa pela faixa de baixo da tela (15% inferiores, onde o CTA fica); volta entre as fotos.
+- Files: `components/MobileEnhance.jsx` (segundo IntersectionObserver com rootMargin -85% no topo), `tests/responsive/enhance.spec.js` (CTA fixo: some sobre as fotos do time, 320×568 e 390×844).
+- Ajuste de teste (F-013): `tests/responsive/helpers.js` `openAt` espera a demo mobile montar (hidratação) antes de medir ou capturar; as referências do visual regeneradas no F-012 tinham pegado o quadro da demo vazio.

@@ -247,6 +247,52 @@ test.describe('CTA fixo: some em todo o hero', () => {
   }
 });
 
+// Review F-006 (c): o CTA fixo não cobre as fotos do time, mas volta entre elas.
+test.describe('CTA fixo: some sobre as fotos do time', () => {
+  test.use({ reducedMotion: 'no-preference' });
+  for (const [w, h] of [[320, 568], [390, 844]]) {
+    test(`${w}x${h}`, async ({ page }) => {
+      await openForScroll(page, w, h);
+      const opacity = () => page.locator('.mcta').evaluate((el) => parseFloat(getComputedStyle(el).opacity));
+      const settle = async () => {
+        await frames(page, 3);
+        await page.waitForTimeout(700);
+      };
+      const n = await page.locator('#time .tmc img').count();
+      expect(n).toBeGreaterThan(0);
+      let back = 0;
+      for (let i = 0; i < n; i++) {
+        // Meio da foto na altura do CTA fixo.
+        await page.evaluate((k) => {
+          const img = document.querySelectorAll('#time .tmc img')[k];
+          const cta = document.querySelector('.mcta').getBoundingClientRect();
+          const r = img.getBoundingClientRect();
+          const ctaMid = (cta.top + cta.bottom) / 2;
+          window.scrollTo({ top: r.top + window.scrollY + r.height / 2 - ctaMid, behavior: 'instant' });
+        }, i);
+        await settle();
+        expect(await opacity(), `foto ${i + 1}`).toBeLessThan(0.05);
+        // Sem foto e sem outro alvo sob o CTA: o CTA volta (texto do cartão abaixo da foto).
+        const free = await page.evaluate((k) => {
+          const img = document.querySelectorAll('#time .tmc img')[k];
+          const tb = img.closest('.tmc').querySelector('.tb').getBoundingClientRect();
+          const cta = document.querySelector('.mcta').getBoundingClientRect();
+          window.scrollTo({ top: tb.bottom + window.scrollY - cta.bottom + 4, behavior: 'instant' });
+          const band = window.innerHeight * 0.15;
+          const imgs = [...document.querySelectorAll('#time .tmc img')].map((x) => x.getBoundingClientRect());
+          return imgs.every((r) => r.bottom <= window.innerHeight - band || r.top >= window.innerHeight);
+        }, i);
+        if (free) {
+          await settle();
+          expect(await opacity(), `texto do cartão ${i + 1}`).toBe(1);
+          back++;
+        }
+      }
+      expect(back, 'o CTA volta entre as fotos ao menos uma vez').toBeGreaterThan(0);
+    });
+  }
+});
+
 // Review F-001: texto de 11 px dos chips da ficha precisa de contraste WCAG AA (4,5:1).
 test.describe('demo mobile: contraste dos chips da ficha', () => {
   test.use({ reducedMotion: 'reduce' });

@@ -35,6 +35,8 @@ const CTA_TARGETS = [
   '.final',
   '#camadas .sticky',
 ];
+// Fotos que o CTA fixo não deve cobrir.
+const PHOTO_TARGETS = '#time .tmc img';
 
 function useFloatingCta(enabled) {
   useEffect(() => {
@@ -62,8 +64,21 @@ function useFloatingCta(enabled) {
       { rootMargin: '-1px 0px', threshold: [0, 0.001, 0.5] },
     );
     for (const el of new Set(CTA_TARGETS.flatMap((s) => [...document.querySelectorAll(s)]))) io.observe(el);
+    // Fotos (F-006c): só contam quando passam pela faixa de baixo da tela, onde o CTA fixo fica.
+    const band = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) seen.add(e.target);
+          else seen.delete(e.target);
+        }
+        sync();
+      },
+      { rootMargin: '-85% 0px 0px 0px', threshold: 0 },
+    );
+    for (const el of document.querySelectorAll(PHOTO_TARGETS)) band.observe(el);
     return () => {
       io.disconnect();
+      band.disconnect();
       delete root.dataset.mcta;
     };
   }, [enabled]);
