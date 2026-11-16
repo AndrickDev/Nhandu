@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=360,initial-scale=1">
+<title>Nhandu · demo mobile (fonte do vídeo vertical)</title>
+<!--
+  Fonte do vídeo vertical public/media/demo-mobile.mp4 (9:16, 15 s, laço sem corte).
+  Conta a mesma história do public/media/demo.mp4 (16:9, 3 painéis lado a lado), empilhada para celular.
+  Palco de 360x640 px CSS; o render.mjs captura a 3x (1080x1920).
+  Tudo é função pura do tempo: window.seek(ms) posiciona cada animação (Web Animations pausadas).
+  Prévia no navegador: sirva a raiz do repositório e abra /tools/demo-mobile/demo-mobile.html?play
+  Para gerar o vídeo: node tools/demo-mobile/render.mjs
+-->
+<style>
+@font-face{font-family:'Newsreader';src:url(/public/fonts/newsreader-latin-400-normal.woff2) format('woff2');font-weight:400;font-style:normal}
+@font-face{font-family:'Newsreader';src:url(/public/fonts/newsreader-latin-400-italic.woff2) format('woff2');font-weight:400;font-style:italic}
+@font-face{font-family:'Geist';src:url(/public/fonts/geist-latin-400-normal.woff2) format('woff2');font-weight:400}
+@font-face{font-family:'Geist';src:url(/public/fonts/geist-latin-500-normal.woff2) format('woff2');font-weight:500}
+@font-face{font-family:'Geist';src:url(/public/fonts/geist-latin-600-normal.woff2) format('woff2');font-weight:600}
+@font-face{font-family:'Geist Mono';src:url(/public/fonts/geist-mono-latin-400-normal.woff2) format('woff2');font-weight:400}
+@font-face{font-family:'Geist Mono';src:url(/public/fonts/geist-mono-latin-500-normal.woff2) format('woff2');font-weight:500}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:360px;height:640px;overflow:hidden;background:#F5F1E8}
+body{font-family:'Geist',system-ui,sans-serif;color:#1A1814;-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+
+/* Palco: papel com a grade do vídeo original. */
+#stage{position:relative;width:360px;height:640px;overflow:hidden;background-color:#F5F1E8;
+  background-image:linear-gradient(rgba(26,24,20,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(26,24,20,.05) 1px,transparent 1px);
+  background-size:30px 30px;background-position:-1px -1px}
+#scene{position:absolute;inset:0;padding:11px 12px;display:flex;flex-direction:column}
+.card{position:relative;border-radius:16px;overflow:hidden;flex:none}
+
+/* Fio entre os blocos, com o ponto que leva o dado de um para o outro. */
+.link{position:relative;flex:none;align-self:center;width:1px;height:12px;border-left:1.5px dashed rgba(200,67,30,.45)}
+.link b{position:absolute;left:-4.5px;top:-4px;width:8px;height:8px;border-radius:50%;background:#C8431E;box-shadow:0 0 0 3px rgba(200,67,30,.18)}
+
+/* 1. Conversa */
+.chat{background:#F0E9DF;border:1px solid #2B2621;box-shadow:0 18px 30px -22px rgba(26,24,20,.5)}
+.chat-hd{display:flex;align-items:center;gap:9px;height:46px;padding:0 56px 0 12px;background:#1B1815;color:#F5F1E8}
+.chat-hd .back{flex:none;opacity:.85}
+.av{flex:none;width:30px;height:30px;border-radius:50%;background:#36302A;display:flex;align-items:center;justify-content:center;font-family:'Newsreader',serif;font-size:16px}
+.who{flex:1;min-width:0;display:flex;flex-direction:column}
+.nm{display:flex;align-items:center;gap:5px;font-size:14.5px;font-weight:600;line-height:1.2}
+.st{position:relative;height:15px;font-size:12px;color:#9FD9B8;line-height:15px}
+.st span{position:absolute;left:0;top:0;white-space:nowrap}
+.chat-body{position:relative;height:170px;overflow:hidden;
+  -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 16px);mask-image:linear-gradient(to bottom,transparent 0,#000 16px)}
+.track{display:flex;flex-direction:column;gap:6px;padding:10px 10px 0}
+.b{position:relative;max-width:84%;padding:7px 11px 7px;border-radius:13px;font-size:14.5px;line-height:1.32;box-shadow:0 1px 1px rgba(26,24,20,.1)}
+.b .tm{float:right;margin:7px 0 -2px 10px;font-size:9.5px;line-height:1;opacity:.6;display:flex;align-items:center;gap:3px}
+.b-in{align-self:flex-start;background:#fff;border-top-left-radius:4px}
+.b-out{align-self:flex-end;background:#1A1814;color:#F5F1E8;border-top-right-radius:4px}
+.b-out .tm{color:#9FD9B8;opacity:.9}
+
+/* 2. Ficha */
+.ficha{background:#FBF8F2;border:1px solid #E2DACB;padding:11px 14px 3px;box-shadow:0 18px 30px -24px rgba(26,24,20,.35)}
+.ficha-hd{display:flex;align-items:center;justify-content:space-between;height:22px}
+.ficha-hd .mono{font-size:11.5px;letter-spacing:.08em;color:#6E675E}
+.chips{position:relative;height:22px;flex:1}
+.chip{position:absolute;right:0;top:0;height:22px;display:flex;align-items:center;gap:6px;padding:0 9px;border-radius:999px;font-family:'Geist Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.06em;white-space:nowrap}
+.chip i{width:5px;height:5px;border-radius:50%;background:currentColor}
+.chip.n{background:#EDE6D8;color:#4F4A43}
+.chip.q{background:rgba(200,67,30,.11);color:#A8361A}
+.chip.ok{background:#E2EFE6;color:#23603F}
+.title{position:relative;height:36px;margin-top:3px}
+.title span{position:absolute;left:0;top:0;line-height:36px;font-family:'Newsreader',serif;font-size:26px;letter-spacing:-.015em;white-space:nowrap}
+.title .ident{color:#A39C91}
+.row{display:flex;align-items:center;justify-content:space-between;height:28px;border-top:1px solid #E2DACB;font-size:14px}
+.row .k{color:#4F4A43}
+.row .v{position:relative;height:28px;flex:1}
+.row .v span{position:absolute;right:0;top:0;line-height:28px;white-space:nowrap}
+.row .v .dash{color:#B5AD9F}
+.row .v .val{font-family:'Geist Mono',monospace;font-size:13px}
+
+/* 3. Agenda */
+.agenda{background:#1B1815;border:1px solid #2B2621;color:#F5F1E8;padding:0 14px 9px;box-shadow:0 18px 30px -22px rgba(26,24,20,.5)}
+.agenda-hd{display:flex;align-items:center;justify-content:space-between;height:33px;font-size:11.5px;letter-spacing:.08em;color:#CFC6B8}
+.sync{display:flex;align-items:center;gap:6px;color:#7FD3A3}
+.sync i{width:5px;height:5px;border-radius:50%;background:#7FD3A3}
+.slot{position:relative;display:flex;align-items:center;gap:14px;height:26px;border-top:1px dashed #36302A;font-size:14px}
+.slot .h{flex:none;width:44px;font-size:12px;color:#A0978A}
+.slot em{font-family:'Newsreader',serif;font-size:15px;color:#8E867A}
+.slot.book{height:44px}
+.slot .hl{position:absolute;inset:2px -8px;border-radius:8px;background:#4A2A1F;box-shadow:inset 0 0 0 1px rgba(232,100,63,.35)}
+.slot.book .h{position:relative}
+.slot .txt{position:relative;flex:1;height:100%}
+.slot .txt > *{position:absolute;left:0;top:0;height:100%;display:flex;flex-direction:column;justify-content:center;white-space:nowrap}
+.slot .booked b{font-weight:600;font-size:14px;line-height:1.25}
+.slot .booked small{font-family:'Geist Mono',monospace;font-size:11px;line-height:1.3;color:#F08A68}
+.note{display:flex;align-items:center;gap:8px;height:26px;margin-top:2px;padding-top:6px;border-top:1px dashed #36302A;font-size:12.5px;color:#CFC6B8;white-space:nowrap}
+.note i{flex:none;width:5px;height:5px;border-radius:50%;background:#7FD3A3}
+
+/* Fecho: a marca, como no vídeo original. */
+#outro{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding-bottom:24px;background:#F5F1E8}
+#outro svg{display:block;color:#1A1814}
+#outro .gd{fill:#1A1814;opacity:.2}
+#outro .wm{margin-top:14px;font-family:'Newsreader',serif;font-size:66px;line-height:1;letter-spacing:-.03em}
+#outro .tag{margin-top:16px;font-family:'Newsreader',serif;font-style:italic;font-size:21px;color:#6E675E}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="scene">
+    <section class="card chat" data-card>
+      <div class="chat-hd">
+        <svg class="back" width="8" height="14" viewBox="0 0 10 16"><path d="M8 1L2 8l6 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="av">A</span>
+        <span class="who">
+          <span class="nm">Clínica Aurora
+            <svg width="13" height="13" viewBox="0 0 12 12"><circle cx="6" cy="6" r="6" fill="#3FA86F"/><path d="M3.4 6.2l1.7 1.7 3.5-3.6" fill="none" stroke="#fff" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <span class="st"><span id="st-on">Agente Nhandu · online</span><span id="st-ty">Agente Nhandu · digitando…</span></span>
+        </span>
+        <!-- O canto direito do cabeçalho fica livre: o botão de pausa da página fica sobre ele. -->
+      </div>
+      <div class="chat-body" id="chat-body"><div class="track" id="track"></div></div>
+    </section>
+
+    <i class="link" data-link><b id="p1"></b></i>
+
+    <section class="card ficha" data-card>
+      <div class="ficha-hd">
+        <span class="mono">PACIENTE #2481</span>
+        <span class="chips">
+          <span class="chip n" id="chip-n"><i></i>NOVO CONTATO</span>
+          <span class="chip q" id="chip-q"><i></i>QUALIFICADO</span>
+          <span class="chip ok" id="chip-ok"><i></i>AGENDADO</span>
+        </span>
+      </div>
+      <div class="title"><span class="ident" id="t-ident">Identificando interesse…</span><span id="t-name">Clareamento dental</span></div>
+      <div class="row"><span class="k">Origem</span><span class="v"><span class="dash">–</span><span class="val" id="v-origem">landing/instagram</span></span></div>
+      <div class="row"><span class="k">Preferência</span><span class="v"><span class="dash">–</span><span class="val" id="v-pref">tarde, após 17h</span></span></div>
+      <div class="row"><span class="k">Horário</span><span class="v"><span class="dash">–</span><span class="val" id="v-hora">qui · 17:30</span></span></div>
+      <div class="row"><span class="k">Responsável</span><span class="v"><span class="dash">–</span><span class="val" id="v-resp">recepção</span></span></div>
+    </section>
+
+    <i class="link" data-link><b id="p2"></b></i>
+
+    <section class="card agenda" data-card>
+      <div class="agenda-hd mono"><span>AGENDA · QUI, 12 NOV</span><span class="sync"><i></i>SINCRONIZADA</span></div>
+      <div class="slot"><span class="h mono">14:00</span><span>Retorno · Pedro A.</span></div>
+      <div class="slot"><span class="h mono">15:30</span><em>livre</em></div>
+      <div class="slot book">
+        <i class="hl" id="hl"></i>
+        <span class="h mono" id="h-book">17:30</span>
+        <span class="txt">
+          <em id="s-free">livre</em>
+          <span class="booked" id="s-booked"><b>Clareamento · paciente #2481</b><small>via agente no WhatsApp</small></span>
+        </span>
+      </div>
+      <div class="slot"><span class="h mono">18:30</span><em>livre</em></div>
+      <div class="note" id="note"><i></i>Recepção avisada · resumo da conversa enviado</div>
+    </section>
+  </div>
+
+  <div id="outro">
+    <svg width="92" height="92" viewBox="0 0 64 64" aria-hidden="true">
+      <circle class="gd" cx="32" cy="16" r="3.2"/><circle class="gd" cx="16" cy="32" r="3.2"/><circle class="gd" cx="32" cy="32" r="3.2"/><circle class="gd" cx="48" cy="32" r="3.2"/><circle class="gd" cx="32" cy="48" r="3.2"/>
+      <path id="o-n" pathLength="1" d="M16 48V16L48 48V16" fill="none" stroke="currentColor" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="1"/>
+      <circle id="o-dot" cx="48" cy="16" r="6.5" fill="#C8431E" style="transform-origin:48px 16px"/>
+    </svg>
+    <div class="wm" id="o-wm">Nhandu</div>
+    <div class="tag" id="o-tag">Comece pelo diagnóstico.</div>
+  </div>
+</div>
+
+<script>
+// Linha do tempo (ms), tirada quadro a quadro do demo.mp4 original.
+const T = 15000;
+const BUBBLES = [
+  { at: 1500, out: false, t: 'Oi! Vocês fazem clareamento?' },
+  { at: 3500, out: true, t: 'Fazemos, sim. Você prefere manhã ou tarde?' },
+  { at: 5000, out: false, t: 'Tarde, depois das 17h' },
+  { at: 7000, out: true, t: 'Tenho quinta, 17h30, com a Dra. Helena. Posso reservar?' },
+  { at: 8000, out: false, t: 'Pode!' },
+  { at: 9500, out: true, t: 'Reservado. Um lembrete chega na véspera.' },
+];
+const TYPING = [[2400, 3500], [6000, 7000], [8800, 9500]];
+const AT = {
+  cards: 300, origem: 2500, name: 4000, pref: 5600, qualificado: 5900, agendado: 10000, hora: 10000, resp: 10150,
+  booked: 10500, note: 11400, sceneOut: 12500, outroIn: 12950, logo: 13150, dot: 13800, wm: 13900, tag: 14300, outroOut: 14650,
+};
+const PULSE1 = [2000, 3700, 5300, 9700];
+const PULSE2 = [10250];
+
+const EASE = 'cubic-bezier(.2,.7,.2,1)';
+const TICK = '<svg width="13" height="8" viewBox="0 0 15 9"><path d="M1 5l2.5 2.5L9 1.5M6 7.5L12.5 1" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const $ = (id) => document.getElementById(id);
+const anims = [];
+
+// frames: [[ms, props, easing?]], em ordem. O primeiro vale desde 0 e o último até T.
+function kf(el, frames) {
+  const list = [];
+  if (frames[0][0] > 0) list.push({ ...frames[0][1], offset: 0 });
+  for (const [ms, props, easing] of frames) list.push({ ...props, offset: Math.min(1, ms / T), ...(easing ? { easing } : {}) });
+  if (frames[frames.length - 1][0] < T) list.push({ ...frames[frames.length - 1][1], offset: 1 });
+  const a = el.animate(list, { duration: T, fill: 'both' });
+  a.pause();
+  anims.push(a);
+}
+const HID = (y) => ({ opacity: 0, transform: `translateY(${y}px)` });
+const VIS = { opacity: 1, transform: 'translateY(0px)' };
+const show = (el, at, y = 8, d = 450) => kf(el, [[at, HID(y), EASE], [at + d, VIS]]);
+const hide = (el, at, d = 220) => kf(el, [[at, { opacity: 1 }], [at + d, { opacity: 0 }]]);
+const swap = (from, to, at) => { hide(from, at); show(to, at + 120, 6); };
+
+function build() {
+  // Entrada dos blocos e saída da cena.
+  document.querySelectorAll('[data-card]').forEach((el, i) => show(el, AT.cards + i * 150, 14, 600));
+  document.querySelectorAll('[data-link]').forEach((el) => kf(el, [[900, { opacity: 0 }], [1300, { opacity: 1 }]]));
+  kf($('scene'), [[AT.sceneOut, { opacity: 1 }], [AT.sceneOut + 450, { opacity: 0 }]]);
+
+  // Conversa: balões entram e a trilha sobe para manter o último balão ancorado embaixo.
+  const track = $('track');
+  const body = $('chat-body');
+  const els = BUBBLES.map((b) => {
+    const el = document.createElement('div');
+    el.className = 'b ' + (b.out ? 'b-out' : 'b-in');
+    el.innerHTML = b.t + '<span class="tm">22:47' + (b.out ? TICK : '') + '</span>';
+    track.appendChild(el);
+    return el;
+  });
+  const ys = els.map((el) => Math.min(0, body.clientHeight - 10 - (el.offsetTop + el.offsetHeight)));
+  const frames = [[0, { transform: 'translateY(0px)' }]];
+  els.forEach((el, i) => {
+    show(el, BUBBLES[i].at);
+    const prev = i ? ys[i - 1] : 0;
+    if (ys[i] !== prev) {
+      frames.push([BUBBLES[i].at, { transform: `translateY(${prev}px)` }, EASE]);
+      frames.push([BUBBLES[i].at + 500, { transform: `translateY(${ys[i]}px)` }]);
+    }
+  });
+  kf(track, frames);
+
+  // "digitando…" no cabeçalho enquanto o agente escreve.
+  const on = [[0, { opacity: 1 }]];
+  const ty = [[0, { opacity: 0 }]];
+  for (const [a, b] of TYPING) {
+    on.push([a, { opacity: 1 }], [a + 150, { opacity: 0 }], [b, { opacity: 0 }], [b + 150, { opacity: 1 }]);
+    ty.push([a, { opacity: 0 }], [a + 150, { opacity: 1 }], [b, { opacity: 1 }], [b + 150, { opacity: 0 }]);
+  }
+  kf($('st-on'), on);
+  kf($('st-ty'), ty);
+
+  // Ficha.
+  kf($('chip-n'), [[AT.qualificado, { opacity: 1 }], [AT.qualificado + 220, { opacity: 0 }]]);
+  kf($('chip-q'), [[AT.qualificado + 120, { opacity: 0 }], [AT.qualificado + 450, { opacity: 1 }], [AT.agendado, { opacity: 1 }], [AT.agendado + 220, { opacity: 0 }]]);
+  kf($('chip-ok'), [[AT.agendado + 120, { opacity: 0 }], [AT.agendado + 450, { opacity: 1 }]]);
+  swap($('t-ident'), $('t-name'), AT.name);
+  for (const [id, at] of [['v-origem', AT.origem], ['v-pref', AT.pref], ['v-hora', AT.hora], ['v-resp', AT.resp]]) {
+    swap($(id).previousElementSibling, $(id), at);
+  }
+
+  // Agenda.
+  kf($('hl'), [[AT.booked, { opacity: 0, transform: 'scaleX(.96)' }, EASE], [AT.booked + 450, { opacity: 1, transform: 'scaleX(1)' }]]);
+  swap($('s-free'), $('s-booked'), AT.booked);
+  kf($('h-book'), [[AT.booked, { color: '#A0978A' }], [AT.booked + 450, { color: '#F5F1E8' }]]);
+  show($('note'), AT.note);
+
+  // Ponto que desce pelo fio quando um dado passa de um bloco para o outro.
+  const pulse = (el, times) => {
+    const f = [[0, { opacity: 0, transform: 'translateY(0px) scale(.4)' }]];
+    for (const t of times) {
+      f.push([t, { opacity: 0, transform: 'translateY(0px) scale(.4)' }], [t + 150, { opacity: 1, transform: 'translateY(0px) scale(1)' }, 'ease-in-out']);
+      f.push([t + 500, { opacity: 1, transform: 'translateY(12px) scale(1)' }], [t + 700, { opacity: 0, transform: 'translateY(12px) scale(.4)' }]);
+    }
+    kf(el, f);
+  };
+  pulse($('p1'), PULSE1);
+  pulse($('p2'), PULSE2);
+
+  // Fecho com a marca; some antes de 15 s para o laço emendar no papel vazio do início.
+  kf($('outro'), [[AT.outroIn - 250, { opacity: 0 }], [AT.outroIn + 50, { opacity: 1 }], [AT.outroOut, { opacity: 1 }], [AT.outroOut + 300, { opacity: 0 }]]);
+  document.querySelectorAll('#outro .gd').forEach((el, i) => kf(el, [[AT.outroIn + i * 40, { opacity: 0 }], [AT.outroIn + 200 + i * 40, { opacity: 0.2 }]]));
+  kf($('o-n'), [[AT.logo, { strokeDashoffset: 1, opacity: 0 }], [AT.logo + 1, { strokeDashoffset: 1, opacity: 1 }, 'cubic-bezier(.6,0,.3,1)'], [AT.logo + 650, { strokeDashoffset: 0, opacity: 1 }]]);
+  kf($('o-dot'), [[AT.dot, { opacity: 0, transform: 'scale(.2)' }, 'cubic-bezier(.3,1.5,.5,1)'], [AT.dot + 350, { opacity: 1, transform: 'scale(1)' }]]);
+  show($('o-wm'), AT.wm, 10, 500);
+  show($('o-tag'), AT.tag, 8, 400);
+}
+
+window.DURATION = T;
+window.seek = (ms) => {
+  for (const a of anims) a.currentTime = ms;
+};
+window.ready = (async () => {
+  await Promise.all([...document.fonts].map((f) => f.load()));
+  await document.fonts.ready;
+  build();
+  window.seek(0);
+})();
+
+// Prévia: ?play roda em tempo real; ?t=12000 para num instante.
+const q = new URLSearchParams(location.search);
+window.ready.then(() => {
+  if (q.has('t')) window.seek(Number(q.get('t')));
+  if (q.has('play')) {
+    const t0 = performance.now();
+    const loop = (now) => {
+      window.seek((now - t0) % T);
+      requestAnimationFrame(loop);
+    };
+    requestAnimationFrame(loop);
+  }
+});
+</script>
+</body>
+</html>

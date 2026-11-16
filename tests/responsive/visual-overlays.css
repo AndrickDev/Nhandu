@@ -1,0 +1,4 @@
+/* Só para as capturas de seção do visual.spec: cabeçalho fixo e CTA fixo caem em alturas diferentes
+   conforme a rolagem da captura de seção mais alta que a tela. O cabeçalho tem captura própria
+   (seção "cabecalho") e o CTA fixo tem testes de comportamento no enhance.spec. */
+header.hdr, .nh .mcta { visibility: hidden !important; }

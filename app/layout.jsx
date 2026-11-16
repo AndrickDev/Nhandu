@@ -1,5 +1,7 @@
 import './fonts.css';
 import './page.css';
+import './mobile.css';
+import './mobile-enhance.css';
 import { SITE, OG_BASE } from '../lib/site.mjs';
 
 export const metadata = {

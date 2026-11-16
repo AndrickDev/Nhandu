@@ -152,6 +152,12 @@ c = Conv(); c.feed(tpl); c.close()
 if c.stack: raise SystemExit('tags abertas: ' + str(c.stack))
 jsx = ''.join(c.o).strip()
 
+# Vídeo da demo (16:9): só carrega acima de 640 px. No celular toca o vídeo vertical do components/MobileEnhance.jsx,
+# e um <source media> que não casa não é baixado (com src direto no <video> o celular baixava os dois).
+VIDEO = re.compile(r'(<video ref=\{setDemo\}) src=\{demoSrc\}([^>]*>)')
+if not VIDEO.search(jsx): raise SystemExit('vídeo da demo não encontrado')
+jsx = VIDEO.sub(r'\1\2<source src={demoSrc} media={"(min-width:641px)"} />', jsx, count=1)
+
 cls = script.replace('class Component extends DCLogic {', 'class NhanduPage extends React.Component {\n  constructor(props) {\n    super(props);\n    this.state = {};\n  }\n', 1)
 if cls == script: raise SystemExit('classe não encontrada')
 render = '  render() {\n    const { ' + ', '.join(sorted(used)) + ' } = this.renderVals();\n    return (\n' + jsx + '\n    );\n  }\n'

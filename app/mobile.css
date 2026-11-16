@@ -1,0 +1,200 @@
+/* Ajustes de celular e tablet mantidos à mão. Não é gerado: tools/convert.py só grava app/page.css e components/NhanduPage.jsx. Vem depois do page.css no layout. */
+
+/* L1: campos com 15px fazem o iPhone dar zoom ao focar. */
+.fld input,.fld select{font-size:16px}
+
+/* L2: o CTA do cabeçalho sai da tela em celular estreito; o CTA fixo .mcta cobre a função. */
+@media (max-width:640px){.hdr .btn-solid{display:none}}
+
+/* L3: alvo de toque .st-mini pequeno demais em paisagem baixa (desktop baixo intocado). */
+@media (max-width:1099px) and (max-height:649px){.st-mini{min-height:24px}}
+
+/* L4: painel do hero em fluxo. Abas viram controle segmentado acima do celular (HIG: alvo 44pt, 4 segmentos de largura igual), agenda empilhada sob o celular. */
+@media (max-width:640px){
+  .panel{height:auto;display:flex;flex-direction:column;align-items:stretch}
+  .panel .ptabs,.panel .phone,.panel .agc{position:relative;inset:auto}
+  .panel .ptabs{order:-1;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;flex-wrap:nowrap;gap:2px;padding:4px;border-radius:999px;background:var(--bg3)}
+  .panel .ptabs button{min-height:44px;min-width:0;padding:0 4px;border:0;border-radius:999px;background:transparent;color:var(--tx2);font-size:13px;white-space:nowrap}
+  .panel .ptabs button.on{background:var(--bg);color:var(--tx);font-weight:600;box-shadow:0 1px 3px rgba(26,24,20,.18),0 0 0 .5px rgba(26,24,20,.08)}
+  .panel .phone{align-self:center;margin-top:16px}
+  .panel .toast{top:84px}
+  /* animation-delay em longhand: o shorthand zeraria a timeline do page.css. Termina em 1,8s. */
+  .panel .agc{width:auto;margin:-40px 10px 0;z-index:2;animation-delay:1s}
+}
+@media (max-width:359px){.panel .ptabs{grid-auto-columns:auto}.panel .ptabs button{font-size:12px}}
+
+/* L7: fundo ASCII do hero só na faixa do painel, com máscara vertical e lateral (o texto fica sobre fundo limpo). */
+@media (max-width:640px){
+  .hero-bg{top:auto;bottom:0;height:800px;
+    -webkit-mask-image:linear-gradient(to bottom,transparent,#000 18%,#000 82%,transparent),linear-gradient(90deg,transparent,transparent 14%,#000 34%,#000 66%,transparent 86%,transparent);
+    mask-image:linear-gradient(to bottom,transparent,#000 18%,#000 82%,transparent),linear-gradient(90deg,transparent,transparent 14%,#000 34%,#000 66%,transparent 86%,transparent);
+    -webkit-mask-composite:source-in;mask-composite:intersect}
+  /* O selo "PARA QUEM" não quebra em 2 linhas. */
+  .pill{align-items:center}
+  .pill b{white-space:nowrap;flex:none}
+}
+
+/* L11: texto do hero no celular. Tudo alinhado à mesma margem esquerda e à mesma largura; o botão principal cabe na primeira tela (390x664).
+   Título menor e com quebra equilibrada; "o que a Nhandu instala" vira faixa de 3 colunas (não são links: sem cara de botão);
+   botões com a mesma largura e 52px de altura; provas em lista.
+   Revisão por tamanho de tela:
+   - Título dimensionado pela coluna (tela menos 40px de margem): a linha em itálico cabe em 1 linha de 320 a 640px, com 3% de folga (3 linhas no total, nunca 4).
+   - Parágrafo, faixa e botões param na mesma medida (540px, a do parágrafo no page.css): uma só borda direita de 481 a 640px.
+     Os botões ficam lado a lado, com larguras iguais, quando os dois cabem (coluna >= 534px); abaixo disso, empilhados.
+   - Colunas da faixa na proporção dos rótulos (1 : 1,36 : 1): os três quebram em 2 linhas ou ficam em 1 linha juntos.
+   - Em tela baixa (iPhone SE com as barras do Safari, 320x568, 360x640) os respiros encolhem com a altura visível (svh) para o botão principal caber
+     na primeira tela; de 720px de altura para cima valem os valores fixos, que também são o fallback sem svh. */
+@media (max-width:640px){
+  .nh .hero{padding-top:24px}
+  .nh .hero .pill{gap:9px;min-height:44px;border-radius:20px;font-size:13px;line-height:1.35;text-wrap:balance}
+  .nh .hero .h1{font-size:clamp(30px,11.6vw - 5.6px,46px);line-height:1;margin-top:18px}
+  .nh .hero .h1 span{text-wrap:balance}
+  .nh .hero .hero-p{font-size:16px;line-height:1.5;margin-top:16px;text-wrap:balance}
+  .nh .hero .offer{display:grid;grid-template-columns:minmax(min-content,1fr) minmax(min-content,1.36fr) minmax(min-content,1fr);gap:0;max-width:540px;margin-top:20px;border-top:1px solid var(--ln2);border-bottom:1px solid var(--ln2)}
+  .nh .hero .offer span{flex-direction:column;align-items:flex-start;gap:6px;padding:10px 8px 11px 12px;border:0;border-left:1px solid var(--ln);border-radius:0;background:none;font-size:13px;line-height:1.3;text-wrap:balance}
+  .nh .hero .offer span:first-child{padding-left:0;border-left:0}
+  .nh .hero .cta-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,262px),1fr));gap:10px;max-width:540px;margin-top:20px}
+  .nh .hero .cta-row .btn{width:100%;min-height:52px;font-size:16px}
+  .nh .hero .proof{display:grid;gap:10px;margin-top:22px}
+  .nh .hero .fmini{min-height:44px;margin-top:18px}
+  /* Celular da demonstração com a largura do desktop (272px) e altura para a conversa inteira: em 244x500 a 1ª mensagem
+     (a pergunta do cliente) ficava cortada sob o cabeçalho do chat nas abas Clínica, Imobiliária e Serviços. */
+  .nh .hero .panel .phone{width:min(272px,100%);height:528px}
+  /* A agenda nunca fica mais estreita que o celular que ela cobre (em 320px ocupa a coluna toda). */
+  .nh .hero .panel .agc{margin-inline:clamp(0px,(100% - 280px) / 2,10px)}
+  @supports (height:1svh){
+    .nh .hero{padding-top:clamp(12px,6svh - 19px,24px)}
+    .nh .hero .h1{margin-top:clamp(10px,6svh - 25px,18px)}
+    .nh .hero .hero-p{margin-top:clamp(10px,6svh - 27px,16px)}
+    .nh .hero .offer,.nh .hero .cta-row{margin-top:clamp(10px,6svh - 23px,20px)}
+    .nh .hero .offer span{padding-top:clamp(7px,6svh - 33px,10px);padding-bottom:clamp(8px,6svh - 32px,11px)}
+  }
+}
+@media (max-width:379px){.nh .hero .pill{font-size:12.5px}}
+@media (max-width:359px){.nh .hero .offer span{font-size:12.5px;padding-right:6px}}
+
+/* L5: texto do CTA da calculadora transborda a caixa do botão; a seta acompanha a última palavra. */
+@media (max-width:640px){
+  .cta-big{display:block;white-space:normal;text-align:center;font-size:15.5px;text-wrap:balance;line-height:1.25;height:auto;padding:18px 20px}
+  .cta-big .arr{display:inline-block;margin-left:6px}
+}
+
+/* L8: título de #camadas colado no topo da seção escura. */
+@media (max-width:640px){#camadas .layers-intro{padding-top:72px}}
+
+/* L9: "Revisão da página" no celular: só a versão aprovada, pinos presos à imagem e ao botão. */
+@media (max-width:640px){
+  .lv.lv1 .wf,.lv.lv1 .to{display:none}
+  .lv.lv1 .fin{height:auto;min-height:0;padding-bottom:28px}
+  .lv.lv1 .fin-h{max-width:58%;min-height:2.1em}
+  .lv.lv1 .fin .pin{margin:0 !important}
+  .lv.lv1 .fin .pin:nth-of-type(2){top:28px !important;right:4px !important;left:auto !important}
+  .lv.lv1 .fin .pin:nth-of-type(3){top:93px !important;left:118px !important}
+}
+
+/* L10: cartões sem vazio interno e ritmo vertical menor. */
+@media (max-width:640px){
+  .fcard{min-height:0;gap:16px;justify-content:flex-start}
+  .fast{padding-bottom:72px}
+  .sec{padding:72px 0}
+}
+
+/* M3: altura do passo a passo segue a janela (svh, 400 a 1200 como o JS), não o --vh que muda na rolagem. */
+@media (max-width:1099px){.track{height:calc(clamp(400px,100svh,1200px) - 68px + 2800px)}.sticky{height:calc(clamp(400px,100svh,1200px) - 68px)}}
+
+/* M4: no celular (≤ 899, uma coluna) cada passo de #camadas cabe inteiro no painel fixo, em qualquer altura de tela.
+   - .sticky em dvh: o painel acompanha a tela visível, e a borda de corte fica no fim real da tela com a barra do Safari aberta ou recolhida.
+   - .track em lvh: comprimento fixo (sem pulo de rolagem, M3) e percurso de ≥ 2800 px nos dois estados da barra (o passo 5 começa em 2560).
+   - .sticky-l em svh é o contêiner "camadas": o conteúdo é diagramado para a menor tela e não muda quando a barra entra ou sai.
+   Espaços em cqh (proporcionais à altura do painel); níveis por @container, não por media query de altura. */
+@media (max-width:899px){
+  .track{height:calc(clamp(400px,100lvh,1200px) - 68px + 2800px)}
+  .sticky{height:calc(clamp(400px,100dvh,1200px) - 68px)}
+  .sticky-l{height:calc(clamp(400px,100svh,1200px) - 68px);overflow:visible;container:camadas / size;padding-top:clamp(10px,2.4svh,20px);padding-bottom:0}
+  .mprog{margin-bottom:clamp(8px,2.2cqh,20px)}
+  .steps .st-full h3{margin:clamp(4px,1cqh,10px) 0 clamp(6px,1.4cqh,12px);text-wrap:balance}
+  .steps .lv{margin-top:clamp(10px,2.2cqh,20px)}
+  /* Roteiro: a pergunta fica colada à resposta (2 linhas por intenção). */
+  .steps .lv2 .intent{row-gap:2px}
+  .steps .lv2 .seal{margin-top:12px}
+  /* Texto mínimo de 11 px (etiquetas do roteiro e hora do relatório tinham 10,5). */
+  .steps .lv2 .intent em,.steps .lv4 .msg-h small{font-size:11px}
+}
+/* Os níveis de altura do page.css (max-height 799 e 649) seguem a altura da janela, que no iOS pode não ser a da tela com as barras abertas.
+   Repetidos pela altura do contêiner, a caixa de conteúdo do .sticky-l (svh − 68 − padding-top; svh ≤ janela): 799 → 711, 649 → 565.
+   Assim o que aparece em cada passo não depende do estado da barra. */
+@container camadas (max-height:711px){
+  .steps .lv{padding:12px 14px}
+  .steps .lv-h{padding-bottom:6px;margin-bottom:6px}
+  .steps .lv-h b{font-size:17px}
+  .steps .jrow{padding:3px 0;font-size:12.5px}
+  .steps .gauge svg{width:88px;height:88px}
+  .steps .gauge b{top:24px;font-size:28px}
+  .steps .lv0-g{grid-template-columns:minmax(0,1fr) 96px}
+  .steps .prio{margin-top:8px}
+  .steps .wf,.steps .fin{height:122px}
+  .steps .hubmap{height:140px}
+  .steps .intent{padding:5px 0;font-size:12.5px}
+}
+@container camadas (max-height:565px){
+  .steps .st-full p,.steps .lv .tested,.steps .lv .ticker,.steps .lv .cm-list{display:none}
+}
+/* Roteiro: com a nota "Testado em…" visível, o selo vai para o canto do cartão, ao lado dela, como no desktop.
+   O selo gira -12° na entrada: a caixa visível passa ~11 px da caixa de layout; bottom e min-height dão essa folga. */
+@container camadas (min-height:566px){
+  .steps .lv2 .tested{min-height:60px;padding-right:124px}
+  .steps .lv2 .seal{position:absolute;right:14px;bottom:18px;margin:0}
+}
+/* Painel alto: texto e cartão maiores, em vez de sobrar faixa vazia. */
+@container camadas (min-height:720px){
+  .steps .st-full h3{font-size:32px}
+  .steps .st-full p{font-size:15.5px;line-height:1.55}
+  .steps .lv{padding:16px 18px}
+  .steps .lv2 .seal{right:18px;bottom:22px}
+  .steps .lv3 .hubmap{height:190px}
+}
+/* Integrações em cartão estreito: os nós ocupam a largura toda; o mapa fica mais alto para o centro "Nhandu" não ficar sob eles. */
+@container camadas (max-width:349px){
+  .steps .lv3 .hubmap{height:196px}
+}
+/* Painel médio (iPhone 8/SE e iPhone 14 com as barras do Safari): relatório mais justo, com os dois avisos lado a lado e sem ícone. */
+@container camadas (max-height:639px){
+  .steps .lv4 .side4{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .steps .lv4 .s4{padding:10px 12px}
+  .steps .lv4 .i4{display:none}
+  .steps .lv4 .lv4-g{gap:10px}
+  .steps .lv4 .msg{padding:10px 12px}
+  .steps .lv4 .msg-b ul{line-height:1.45}
+}
+/* Painel baixo (320x568, 375x553): sai a decoração antes do conteúdo. Relatório sem o gráfico de linha e avisos só com o título;
+   em tela estreita, etiquetas de prioridade mais justas. */
+@container camadas (max-height:539px){
+  .steps .lv4 .msg-b svg,.steps .lv4 .s4 small{display:none}
+  .steps .lv4 .msg-b ul{margin-top:6px}
+}
+@container camadas (max-height:539px) and (max-width:359px){
+  .steps .lv0 .prio{gap:4px}
+  .steps .lv0 .prio span{padding:4px 8px}
+  .steps .lv0 .jrow{padding:2px 0}
+}
+
+/* CTA fixo cobre o campo em foco só no formulário de diagnóstico; campos da calculadora não o escondem. */
+.nh:has(#form-diag :is(input,select,textarea):focus) .mcta{display:none}
+
+/* L6/M1: seções inteiras sumiam (clip-path/escala) e animações usavam clip-path/filter na rolagem. Só transform/opacity. */
+@media (max-width:1099px) and (prefers-reduced-motion:no-preference){
+  @supports (animation-timeline: view()){
+    /* .zi, .zo e .reveal não estão no markup atual; entram por precaução contra reconversão. */
+    .fold,.zi,.zo,.open,.circ,.reveal,.lift{animation:none!important;clip-path:none!important}
+    /* Só troca o keyframe; mantém timeline e range do page.css. .sol-l usa splitL (translateX -60px), que corta o texto em uma coluna. */
+    .split .sol-l,.split .sol-r,.tmc img{animation-name:rvIn}
+    @keyframes wInM{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
+    .wd{animation-name:wInM}
+  }
+}
+/* Títulos .rv chegam a opacidade 1 antes de passar da metade da tela. */
+@media (max-width:1099px) and (prefers-reduced-motion:no-preference){
+  @supports (animation-timeline: view()){
+    .nh .rv{animation-range:entry 0% entry 70% !important}
+  }
+}

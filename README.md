@@ -69,11 +69,15 @@ Suíte em Playwright (`tests/responsive/`) que confere o site em telas de celula
 
 ```bash
 npx playwright install chromium webkit   # uma vez, baixa os navegadores
-npm run test:mobile          # layout em cada largura + página em uso (perguntas abertas, calculadora, formulário)
+npm run test:mobile          # layout em cada largura + página em uso (perguntas abertas, calculadora, formulário) + movimento na rolagem + ajustes de celular (refino) + demo mobile e CTA fixo (enhance)
 npm run test:mobile:sweep    # varredura contínua de 320 a 480 px, de 2 em 2
 npm run test:mobile:update   # gera ou atualiza as imagens de referência
 npm run test:mobile:visual   # compara cada seção com a imagem de referência
+npm run test:desktop         # compara as seções no desktop real (1280 e 1440 px) com as referências
+npm run test:desktop:update  # gera as referências de desktop
 ```
+
+O `test:desktop` roda em contexto de desktop real (sem emulação de celular) em 1280 e 1440 px. Gere as referências na versão aprovada, antes de mexer em CSS, e compare depois: qualquer diferença no desktop aparece como falha. O visual também cobre a introdução de `#camadas` (`camadas-intro`) e o quadro do vídeo (`demo`). As referências ficam fora do git (dependem do sistema que as gerou); gere-as localmente.
 
 Por padrão a suíte compila o site e sobe um servidor local. Para testar um endereço publicado, use `BASE_URL`:
 
@@ -81,9 +85,9 @@ Por padrão a suíte compila o site e sobe um servidor local. Para testar um end
 BASE_URL=https://nhandu.tech npm run test:mobile
 ```
 
-Para rodar só no Chrome já instalado, sem baixar navegadores: `PW_CHANNEL=chrome npx playwright test layout states --project=chrome`.
+Para rodar só no Chrome já instalado, sem baixar navegadores: `PW_CHANNEL=chrome npx playwright test layout states motion refino enhance --project=chrome`.
 
-Falhas conhecidas das suítes `layout` e `states`: hoje elas apontam problemas vindos do `app/page.css`, gerado pelo canvas, a corrigir no canvas (não editar o arquivo gerado): campos do formulário de diagnóstico com fonte de 15px (o iPhone dá zoom ao focar), o botão `.btn-solid` saindo da tela em larguras estreitas e o alvo de toque `.st-mini` pequeno demais.
+Ajustes de celular e tablet ficam em `app/mobile.css`, mantido à mão e importado depois do `app/page.css` gerado: corrija ali o que vier do canvas, sem editar o arquivo gerado.
 
 O que cada teste de layout cobra, em cada largura:
 
@@ -92,6 +96,42 @@ O que cada teste de layout cobra, em cada largura:
 - nenhum texto de botão ou título é cortado;
 - alvos de toque com 24 px ou mais, ou com folga até o vizinho;
 - nenhuma fonte abaixo de 10 px;
-- campos de formulário com 16 px ou mais (abaixo disso o Safari do iPhone dá zoom ao focar).
+- campos de formulário com 16 px ou mais (abaixo disso o Safari do iPhone dá zoom ao focar);
+- nenhum botão, link ou resumo com texto além da própria caixa (`texto-transborda`).
+
+Páginas cobertas: home, privacidade, termos, demo (`/demo/nutricao`) e briefing (`/briefing/nutricao`).
+
+O que cada teste de movimento (`motion`) cobra, com a animação ligada:
+
+- seções inteiras na tela: até 1099 px nenhuma seção visível fica cortada, transparente ou reduzida durante a rolagem;
+- entradas não saem da tela: nenhum título, texto, link ou botão passa da borda lateral enquanto entra com a animação;
+- rolagem só com transform e opacity: as animações ligadas à rolagem não animam propriedades que forçam repintura, e os alvos conhecidos usam os keyframes leves;
+- passo a passo ignora `--vh`: a altura do bloco fixo não muda quando `--vh` muda, até 1099 px;
+- reduzir movimento: com `prefers-reduced-motion: reduce` nenhuma animação roda dentro da página;
+- desktop intacto: em 1280 px as animações e o comportamento originais continuam;
+- hero: as abas de segmento não cobrem o cartão de agenda;
+- CTA fixo some com campo focado, em 375 px.
+
+O que cada teste do refino mobile (`refino`) cobra, de 320 a 640 px:
+
+- hero: o fundo ASCII começa abaixo do texto e tem máscara vertical e lateral; o selo "PARA QUEM" fica em 1 linha;
+- hero: as 4 abas formam um controle segmentado de 1 linha, com alvos de 44 px, acima do celular; o cartão de agenda fica sob o celular sem vazio e aparece até 2 s depois de trocar de aba;
+- calculadora: a seta do botão fica junto ao texto, e o botão tem 1 linha a partir de 430 px;
+- camadas: o título tem 64 px de respiro; na "Revisão da página" (passo 2) só a versão aprovada aparece, com os pinos presos à imagem e ao botão, em 390x664, 375x553 e 320x568;
+- cartões `.fcard` sem vazio interno; seções com 72 px de padding e títulos `.rv` totalmente visíveis a 75% da altura da tela.
 
 Larguras, páginas e limites ficam em `tests/responsive/helpers.js`. As imagens de referência ficam em `tests/responsive/__screenshots__/` e valem só para o sistema que as gerou. O relatório com imagens e passo a passo de cada falha abre com `npx playwright show-report`.
+
+### Demo mobile e CTA fixo
+
+Até 640 px, o vídeo 16:9 de 3 painéis da seção "Do primeiro oi à agenda" (`public/media/demo.mp4`) fica oculto e não é baixado (o `<source>` dele só vale acima de 640 px, ajuste feito em `tools/convert.py`), e `components/MobileEnhance.jsx` monta no mesmo quadro um vídeo vertical (`.mdemo-video`, estilos em `app/mobile-enhance.css`): `public/media/demo-mobile.mp4` (9:16, 1080x1920, H.264, 15 s em laço, sem áudio), com a mesma história empilhada (conversa, ficha, agenda) e texto legível no celular. Ele toca sozinho só com o quadro na tela, para no botão de pausa (`.mdemo-btn`) e, com movimento reduzido, fica parado no poster (`demo-mobile-poster.jpg`, o estado final da história) até a pessoa tocar. Acima de 640 px nada muda e o arquivo vertical não é baixado.
+
+Para refazer o vídeo vertical (texto, tempos e desenho ficam em `tools/demo-mobile/demo-mobile.html`; prévia em `/tools/demo-mobile/demo-mobile.html?play` servindo a raiz do repositório):
+
+```bash
+node tools/demo-mobile/render.mjs   # grava public/media/demo-mobile.mp4 e demo-mobile-poster.jpg
+```
+
+O script não usa ffmpeg: captura os quadros no Google Chrome instalado, codifica com o WebCodecs do próprio Chrome e escreve o MP4. Os testes que conferem a reprodução precisam de um navegador com H.264 e são pulados onde ele faltar (nesse caso, rode com `PW_CHANNEL=chrome`).
+
+O CTA fixo (`.mcta`) some, com `html[data-mcta="off"]`, quando um link para `#form-diag`/`#comecar`, o formulário, a seção final ou a história fixa de "camadas" estão na tela. O `bottom` já usa `env(safe-area-inset-bottom)`, mas sem `viewport-fit=cover` no viewport esse valor é 0 (limitação conhecida). Testes: `tests/responsive/enhance.spec.js`.

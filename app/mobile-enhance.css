@@ -1,0 +1,28 @@
+/* Melhorias só de celular, mantidas à mão (T03 do mobile-refino). Não é gerado. Vem depois do mobile.css no layout.
+   Tudo dentro de max-width:640px; nada vale no desktop. Animação só com transform/opacity. */
+
+@media (max-width:640px){
+  /* CTA fixo: some quando há um CTA equivalente na tela (html[data-mcta="off"], posto pelo MobileEnhance). */
+  .nh .mcta{bottom:max(12px, env(safe-area-inset-bottom));transition:opacity .25s ease,transform .3s cubic-bezier(.2,.7,.2,1)}
+  html[data-mcta="off"] .nh .mcta{opacity:0;transform:translateY(16px);pointer-events:none}
+  html[data-mcta="off"] .nh .mcta:focus-visible{opacity:1;transform:none;pointer-events:auto}
+
+  /* Quadro do vídeo: no celular toca o vídeo vertical 9:16 (.mdemo, montado pelo MobileEnhance no lugar do 16:9).
+     A proporção fixa evita pulo de layout; o poster de fundo cobre o intervalo até o vídeo montar. */
+  .nh .vframe{aspect-ratio:9 / 16;max-width:420px;margin-inline:auto;background:#F5F1E8 url(/media/demo-mobile-poster.jpg) center/cover no-repeat}
+  .nh .vframe > video,.nh .vframe > .vbtn{display:none}
+  .nh .mdemo-host,.nh .mdemo{position:absolute;inset:0}
+  .nh .mdemo-video{display:block;width:100%;height:100%;object-fit:cover}
+
+  /* Botão de pausa: alvo de 44 px sobre o canto livre do cabeçalho da conversa no vídeo; o disco visível tem 34 px. */
+  .nh .mdemo-btn{position:absolute;z-index:2;left:89.2%;top:5.3%;transform:translate(-50%,-50%);width:44px;height:44px;padding:0;border:0;border-radius:50%;background:transparent;color:#F5F1E8;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent}
+  .nh .mdemo-btn::before{content:"";position:absolute;width:34px;height:34px;border-radius:50%;background:rgba(54,48,42,.92);box-shadow:inset 0 0 0 1px rgba(245,241,232,.22);transition:background .2s}
+  .nh .mdemo-btn svg{position:relative}
+  .nh .mdemo-btn:active::before{background:#C8431E}
+  .nh .mdemo-btn:focus-visible{outline:2px solid #E8643F;outline-offset:-2px}
+}
+
+/* Movimento reduzido: o vídeo da demo não toca sozinho (fica no poster); nada de transição. */
+@media (max-width:640px) and (prefers-reduced-motion:reduce){
+  .nh .mcta,.nh .mdemo-btn::before{transition:none !important;animation:none !important}
+}
