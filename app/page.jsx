@@ -1,4 +1,5 @@
 import NhanduPage from '../components/NhanduPage';
+import MobileEnhance from '../components/MobileEnhance';
 import { SITE, SITE_NAME, CONTACT_EMAIL, LEGAL_NAME, OG_BASE, serializeJsonLd } from '../lib/site.mjs';
 
 const TITLE = 'Agente de IA no WhatsApp para atender e agendar 24h | Nhandu';
@@ -32,6 +33,7 @@ export default function Home() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(JSON_LD) }} />
       <NhanduPage />
+      <MobileEnhance />
     </>
   );
 }

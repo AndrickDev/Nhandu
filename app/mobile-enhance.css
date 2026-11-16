@@ -1,0 +1,94 @@
+/* Melhorias só de celular, mantidas à mão (T03 do mobile-refino). Não é gerado. Vem depois do mobile.css no layout.
+   Tudo dentro de max-width:640px; nada vale no desktop. Animação só com transform/opacity. */
+
+@media (max-width:640px){
+  /* CTA fixo: some quando há um CTA equivalente na tela (html[data-mcta="off"], posto pelo MobileEnhance). */
+  .nh .mcta{bottom:max(12px, env(safe-area-inset-bottom));transition:opacity .25s ease,transform .3s cubic-bezier(.2,.7,.2,1)}
+  html[data-mcta="off"] .nh .mcta{opacity:0;transform:translateY(16px);pointer-events:none}
+
+  /* Quadro do vídeo vira a demo vertical. A altura mínima evita pulo de layout antes de a demo montar. */
+  .nh .vframe{aspect-ratio:auto;padding:14px;min-height:700px}
+  .nh .vframe video,.nh .vframe .vbtn{display:none}
+
+  .nh .mdemo{position:relative;display:flex;flex-direction:column;font-family:'Geist',system-ui,sans-serif;color:var(--tx);transition:opacity .45s ease}
+  .nh .mdemo.is-out{opacity:0}
+  .nh .mdemo .m-mono{font-family:'Geist Mono',ui-monospace,monospace}
+  .nh .mdemo .m-mu{color:var(--mu)}
+
+  /* Cartões: mesma borda e raio do site. */
+  .nh .mdemo .m-card{position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--ln)}
+
+  /* Fio de ligação entre os blocos (12 px de respiro). */
+  .nh .mdemo .m-link{align-self:center;width:0;height:12px;border-left:1px dashed var(--ln2);opacity:0;transition:opacity .45s ease}
+  .nh .mdemo .m-link.on{opacity:1}
+
+  /* Entradas: opacity + translateY(8px). */
+  .nh .mdemo .m-it{opacity:0;transform:translateY(8px);transition:opacity .45s cubic-bezier(.2,.7,.2,1),transform .45s cubic-bezier(.2,.7,.2,1)}
+  .nh .mdemo .m-it.on{opacity:1;transform:none}
+  .nh .mdemo.is-reset .m-it,.nh .mdemo.is-reset .m-link,.nh .mdemo.is-reset .m-hl{transition:none}
+
+  /* Botão de pausa: alvo de 44 px sobre o canto do cabeçalho da conversa; o disco visível tem 34 px. */
+  .nh .mdemo-btn{position:absolute;z-index:2;top:4px;right:4px;width:44px;height:44px;padding:0;border:0;border-radius:50%;background:transparent;color:#F5F1E8;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent}
+  .nh .mdemo-btn::before{content:"";position:absolute;width:34px;height:34px;border-radius:50%;background:rgba(245,241,232,.12);box-shadow:inset 0 0 0 1px rgba(245,241,232,.22);transition:background .2s}
+  .nh .mdemo-btn svg{position:relative}
+  .nh .mdemo-btn:active::before{background:#C8431E}
+  .nh .mdemo-btn:focus-visible{outline:2px solid #E8643F;outline-offset:-2px}
+
+  /* 1. Conversa: cabeçalho escuro e balões como o celular do hero. */
+  .nh .m-chat{background:#EFE7DC;border-color:#36302A}
+  .nh .m-chat-hd{display:flex;align-items:center;gap:10px;height:52px;padding:0 52px 0 12px;background:#1B1815;color:#F5F1E8}
+  .nh .m-av{flex:none;width:32px;height:32px;border-radius:50%;background:#36302A;display:flex;align-items:center;justify-content:center;font-family:'Newsreader',serif;font-size:16px}
+  .nh .m-who{min-width:0;display:flex;flex-direction:column;gap:1px}
+  .nh .m-nm{display:flex;align-items:center;gap:5px;font-size:13.5px;font-weight:600;white-space:nowrap}
+  .nh .m-st{font-size:11px;color:#9FD9B8;white-space:nowrap}
+  .nh .m-chat-body{height:176px;overflow:hidden;position:relative;background-image:radial-gradient(rgba(26,24,20,.05) 1px,transparent 1px);background-size:14px 14px;
+    -webkit-mask-image:linear-gradient(to bottom,transparent,#000 22px);mask-image:linear-gradient(to bottom,transparent,#000 22px)}
+  .nh .m-track{padding:12px 10px 0;display:flex;flex-direction:column;gap:6px;transition:transform .5s cubic-bezier(.2,.7,.2,1);will-change:transform}
+  .nh .m-b{max-width:86%;padding:7px 11px;border-radius:13px;font-size:12.5px;line-height:1.4;box-shadow:0 1px 1px rgba(26,24,20,.08)}
+  .nh .m-in{align-self:flex-start;background:#fff;color:#1A1814;border-top-left-radius:4px}
+  .nh .m-out{align-self:flex-end;background:#1A1814;color:#F5F1E8;border-top-right-radius:4px}
+
+  /* 2. Ficha: cartão claro, título em Newsreader. */
+  .nh .m-ficha{background:var(--bg2);padding:12px 14px 4px}
+  .nh .m-ficha-hd{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:22px}
+  .nh .m-ficha-hd .m-mono{font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+  .nh .m-chip{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.04em;text-transform:uppercase;padding:3px 9px;border-radius:999px;opacity:0;transition:opacity .45s ease;white-space:nowrap}
+  .nh .m-chip.on{opacity:1}
+  .nh .m-chip.m-n{background:var(--bg3);color:var(--tx2)}
+  .nh .m-chip.m-q{background:rgba(200,67,30,.1);color:#C8431E}
+  .nh .m-chip.m-ok{background:var(--okbg);color:var(--ok)}
+  .nh .m-title{position:relative;height:34px;margin-top:2px}
+  .nh .m-title > span{position:absolute;left:0;top:0;line-height:34px}
+  .nh .m-name{font-family:'Newsreader',serif;font-size:24px;letter-spacing:-.01em;white-space:nowrap}
+  .nh .m-ident{font-size:13px;color:var(--mu);font-style:italic}
+  .nh .m-rows{margin:0;padding:0}
+  .nh .m-row{display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:30px;border-top:1px solid var(--ln);font-size:13px}
+  .nh .m-row dt{color:var(--tx2)}
+  .nh .m-row dd{margin:0;font-size:12px;text-align:right}
+
+  /* 3. Agenda: cartão escuro, horas em Geist Mono, linha agendada com acento. */
+  .nh .m-agenda{background:#1B1815;border-color:#36302A;color:#F5F1E8;padding:0 14px 12px}
+  .nh .m-agenda-hd{display:flex;justify-content:space-between;align-items:center;gap:8px;height:36px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#CFC6B8}
+  .nh .m-sync{display:flex;align-items:center;gap:6px;color:#7FD3A3;white-space:nowrap}
+  .nh .m-sync i{width:6px;height:6px;border-radius:50%;background:#7FD3A3}
+  .nh .m-slots{list-style:none;margin:0;padding:0}
+  .nh .m-slots li{position:relative;display:flex;align-items:center;gap:14px;min-height:28px;border-top:1px solid #36302A;font-size:13px}
+  .nh .m-slots li > .m-mono{flex:none;width:44px;font-size:11.5px;color:#A0978A}
+  .nh .m-slots em{font-family:'Newsreader',serif;font-size:14px;color:#A0978A}
+  .nh .m-book{min-height:46px}
+  .nh .m-hl{position:absolute;inset:0 -14px;background:rgba(232,100,63,.16);box-shadow:inset 3px 0 0 #E8643F;opacity:0;transition:opacity .45s ease;pointer-events:none}
+  .nh .m-hl.on{opacity:1}
+  .nh .m-book > .m-mono{position:relative;color:#F5F1E8}
+  .nh .m-slot-txt{position:relative;flex:1;display:grid;align-items:center;min-width:0}
+  .nh .m-slot-txt > *{grid-area:1/1}
+  .nh .m-slot-txt .m-booked{display:flex;flex-direction:column;gap:2px;white-space:nowrap}
+  .nh .m-booked b{font-weight:500;font-size:13px}
+  .nh .m-booked small{font-size:11px;color:#CFC6B8}
+  .nh .m-note{display:flex;align-items:center;gap:8px;margin:8px 0 0;padding-top:10px;border-top:1px solid #36302A;font-size:12px;line-height:1.35;color:#CFC6B8}
+  .nh .m-note svg{flex:none;color:#7FD3A3}
+}
+
+/* Movimento reduzido: o JS já entrega o passo final; nada de transição ou entrada. */
+@media (max-width:640px) and (prefers-reduced-motion:reduce){
+  .nh .mcta,.nh .mdemo,.nh .mdemo *,.nh .mdemo *::before{transition:none !important;animation:none !important}
+}

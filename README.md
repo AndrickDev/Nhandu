@@ -121,3 +121,9 @@ O que cada teste do refino mobile (`refino`) cobra, de 320 a 640 px:
 - cartões `.fcard` sem vazio interno; seções com 72 px de padding e títulos `.rv` totalmente visíveis a 75% da altura da tela.
 
 Larguras, páginas e limites ficam em `tests/responsive/helpers.js`. As imagens de referência ficam em `tests/responsive/__screenshots__/` e valem só para o sistema que as gerou. O relatório com imagens e passo a passo de cada falha abre com `npx playwright show-report`.
+
+### Demo mobile e CTA fixo
+
+Até 640 px, o vídeo 16:9 de 3 painéis da seção "Do primeiro oi à agenda" fica oculto e pausado, e `components/MobileEnhance.jsx` monta no lugar uma demo vertical em DOM/CSS (`.mdemo`, estilos em `app/mobile-enhance.css`), com a mesma história de 15 s. O texto da demo (balões, ficha, agenda) e a linha do tempo estão no começo de `MobileEnhance.jsx` (`BUBBLES`, `EVENTS`). Ela só anda com a seção na tela, para no botão de pausa e mostra o passo final com movimento reduzido. Para trocar por um vídeo vertical: troque o `Demo` por um `<video>` 9:16 dentro do mesmo portal (e remova `.nh .vframe video{display:none}`).
+
+O CTA fixo (`.mcta`) some, com `html[data-mcta="off"]`, quando um link para `#form-diag`/`#comecar`, o formulário, a seção final ou a história fixa de "camadas" estão na tela. O `bottom` já usa `env(safe-area-inset-bottom)`, mas sem `viewport-fit=cover` no viewport esse valor é 0 (limitação conhecida). Testes: `tests/responsive/enhance.spec.js`.
