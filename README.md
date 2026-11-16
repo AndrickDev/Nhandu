@@ -124,6 +124,14 @@ Larguras, páginas e limites ficam em `tests/responsive/helpers.js`. As imagens 
 
 ### Demo mobile e CTA fixo
 
-Até 640 px, o vídeo 16:9 de 3 painéis da seção "Do primeiro oi à agenda" fica oculto e pausado, e `components/MobileEnhance.jsx` monta no lugar uma demo vertical em DOM/CSS (`.mdemo`, estilos em `app/mobile-enhance.css`), com a mesma história de 15 s. O texto da demo (balões, ficha, agenda) e a linha do tempo estão no começo de `MobileEnhance.jsx` (`BUBBLES`, `EVENTS`). Ela só anda com a seção na tela, para no botão de pausa e mostra o passo final com movimento reduzido. Para trocar por um vídeo vertical: troque o `Demo` por um `<video>` 9:16 dentro do mesmo portal (e remova `.nh .vframe video{display:none}`).
+Até 640 px, o vídeo 16:9 de 3 painéis da seção "Do primeiro oi à agenda" (`public/media/demo.mp4`) fica oculto e não é baixado (o `<source>` dele só vale acima de 640 px, ajuste feito em `tools/convert.py`), e `components/MobileEnhance.jsx` monta no mesmo quadro um vídeo vertical (`.mdemo-video`, estilos em `app/mobile-enhance.css`): `public/media/demo-mobile.mp4` (9:16, 1080x1920, H.264, 15 s em laço, sem áudio), com a mesma história empilhada (conversa, ficha, agenda) e texto legível no celular. Ele toca sozinho só com o quadro na tela, para no botão de pausa (`.mdemo-btn`) e, com movimento reduzido, fica parado no poster (`demo-mobile-poster.jpg`, o estado final da história) até a pessoa tocar. Acima de 640 px nada muda e o arquivo vertical não é baixado.
+
+Para refazer o vídeo vertical (texto, tempos e desenho ficam em `tools/demo-mobile/demo-mobile.html`; prévia em `/tools/demo-mobile/demo-mobile.html?play` servindo a raiz do repositório):
+
+```bash
+node tools/demo-mobile/render.mjs   # grava public/media/demo-mobile.mp4 e demo-mobile-poster.jpg
+```
+
+O script não usa ffmpeg: captura os quadros no Google Chrome instalado, codifica com o WebCodecs do próprio Chrome e escreve o MP4. Os testes que conferem a reprodução precisam de um navegador com H.264 e são pulados onde ele faltar (nesse caso, rode com `PW_CHANNEL=chrome`).
 
 O CTA fixo (`.mcta`) some, com `html[data-mcta="off"]`, quando um link para `#form-diag`/`#comecar`, o formulário, a seção final ou a história fixa de "camadas" estão na tela. O `bottom` já usa `env(safe-area-inset-bottom)`, mas sem `viewport-fit=cover` no viewport esse valor é 0 (limitação conhecida). Testes: `tests/responsive/enhance.spec.js`.

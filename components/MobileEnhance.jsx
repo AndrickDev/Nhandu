@@ -1,12 +1,11 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 // Melhorias só de celular (<= 640 px), montadas ao lado do NhanduPage (gerado, não editar):
 // 1. CTA fixo (.mcta) que some quando um CTA equivalente já está na tela;
-// 2. demo vertical (DOM/CSS) no lugar do vídeo 16:9 de 3 painéis.
-// Para trocar a demo por um vídeo vertical, veja a seção "Demo mobile" do README.
+// 2. vídeo vertical da demo (9:16) no lugar do vídeo 16:9 de 3 painéis. Veja a seção "Demo mobile" do README.
 
 const NARROW = '(max-width:640px)';
 const REDUCE = '(prefers-reduced-motion: reduce)';
@@ -86,23 +85,9 @@ function useFloatingCta(enabled) {
 
 /* ---------- Demo mobile ---------- */
 
-// [instante em ms, passo]. Laço de 15 s: do passo 9 (esmaece) ao 0 (zerado), recomeça.
-const EVENTS = [
-  [500, 1], [2000, 2], [3500, 3], [5000, 4], [6500, 5], [7500, 6], [8500, 7], [9500, 8], [14000, 9], [14600, 0],
-];
-const LAST = 8;
-const LOOP_MS = 15000;
-
-const gapBefore = (i, started) => (i === 0 ? (started ? LOOP_MS - EVENTS[EVENTS.length - 1][0] + EVENTS[0][0] : EVENTS[0][0]) : EVENTS[i][0] - EVENTS[i - 1][0]);
-
-const BUBBLES = [
-  { at: 1, out: false, t: 'Oi! Vocês fazem clareamento?' },
-  { at: 2, out: true, t: 'Fazemos, sim. Você prefere manhã ou tarde?' },
-  { at: 3, out: false, t: 'Tarde, depois das 17h' },
-  { at: 4, out: true, t: 'Tenho quinta, 17h30, com a Dra. Helena. Posso reservar?' },
-  { at: 5, out: false, t: 'Pode!' },
-  { at: 6, out: true, t: 'Reservado. Um lembrete chega na véspera.' },
-];
+// Vídeo vertical (9:16, 15 s) com a mesma história do demo.mp4 de desktop. Gerado por tools/demo-mobile/render.mjs.
+const DEMO_SRC = '/media/demo-mobile.mp4';
+const DEMO_POSTER = '/media/demo-mobile-poster.jpg';
 
 const PLAY = (
   <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
@@ -116,21 +101,15 @@ const PAUSE = (
   </svg>
 );
 
-const cx = (...c) => c.filter(Boolean).join(' ');
-
 function Demo({ reduced }) {
-  const [step, setStep] = useState(reduced ? LAST : 0);
-  const [paused, setPaused] = useState(false);
+  // Pausa pedida pela pessoa. Com movimento reduzido já começa pausado, no poster (o estado final da história);
+  // a troca da preferência remonta a Demo (key no portal).
+  const [paused, setPaused] = useState(reduced);
   const [inView, setInView] = useState(false);
   const root = useRef(null);
-  const body = useRef(null);
-  const track = useRef(null);
-  const idx = useRef(0);
-  const started = useRef(false);
+  const video = useRef(null);
 
-  // Reduced-motion: passo final fixo, sem timer. A troca da preferência remonta a Demo (key no portal).
-
-  // Só roda com a demo na tela.
+  // Só toca com a demo na tela.
   useEffect(() => {
     const el = root.current;
     if (!el || typeof IntersectionObserver === 'undefined') return undefined;
@@ -139,138 +118,27 @@ function Demo({ reduced }) {
     return () => io.disconnect();
   }, []);
 
-  const active = !reduced && !paused && inView;
+  const active = !paused && inView;
   useEffect(() => {
-    if (!active) return undefined;
-    let id;
-    const tick = () => {
-      const i = idx.current;
-      id = setTimeout(() => {
-        started.current = true;
-        setStep(EVENTS[i][1]);
-        idx.current = (i + 1) % EVENTS.length;
-        tick();
-      }, gapBefore(i, started.current));
-    };
-    tick();
-    return () => clearTimeout(id);
+    const v = video.current;
+    if (!v) return;
+    if (!active) {
+      v.pause();
+      return;
+    }
+    // O iOS só deixa tocar sozinho com a propriedade muted ligada (o atributo do React não basta).
+    v.muted = true;
+    const p = v.play();
+    // Autoplay recusado (economia de energia, por exemplo): fica no poster com o botão em "Retomar".
+    if (p && p.catch) p.catch((err) => err && err.name === 'NotAllowedError' && setPaused(true));
   }, [active]);
 
-  // A conversa rola com transform: o último balão visível fica ancorado embaixo, sem pulo de layout.
-  useLayoutEffect(() => {
-    const b = body.current;
-    const t = track.current;
-    if (!b || !t) return undefined;
-    const place = () => {
-      let shown = -1;
-      BUBBLES.forEach((x, i) => {
-        if (step >= x.at) shown = i;
-      });
-      let y = 0;
-      if (shown >= 0) {
-        const el = t.children[shown];
-        y = Math.min(0, b.clientHeight - 12 - (el.offsetTop + el.offsetHeight));
-      }
-      t.style.transform = `translateY(${y}px)`;
-    };
-    place();
-    window.addEventListener('resize', place);
-    return () => window.removeEventListener('resize', place);
-  }, [step]);
-
-  // Pausar no esmaecimento (9) ou no quadro zerado (0) deixaria a demo vazia: mostra o passo final e,
-  // ao retomar, segue do esmaecimento.
-  const togglePause = () => {
-    if (!paused && (step === 9 || step === 0)) {
-      setStep(LAST);
-      idx.current = EVENTS.findIndex((e) => e[1] === 9);
-      started.current = true;
-    }
-    setPaused((p) => !p);
-  };
-
-  const on = (n) => step >= n;
-  const chip = step >= 6 ? ['ok', 'Agendado'] : step >= 3 ? ['q', 'Qualificado'] : ['n', 'Novo contato'];
-
   return (
-    <div ref={root} className={cx('mdemo', step === 9 && 'is-out', step === 0 && 'is-reset')} data-step={step} data-last={LAST} role="group" aria-label="Demonstração animada: do primeiro oi à agenda">
-      {/* Com movimento reduzido a demo já é estática: sem botão de pausa. */}
-      {!reduced && (
-        <button type="button" className="mdemo-btn" aria-label={paused ? 'Retomar demonstração' : 'Pausar demonstração'} onClick={togglePause}>
-          {paused ? PLAY : PAUSE}
-        </button>
-      )}
-
-      <div className="m-card m-chat" aria-hidden="true">
-        <div className="m-chat-hd">
-          <span className="m-av">A</span>
-          <span className="m-who">
-            <span className="m-nm">
-              Clínica Aurora
-              <svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="6" fill="#3FA86F" /><path d="M3.4 6.2l1.7 1.7 3.5-3.6" fill="none" stroke="#fff" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" /></svg>
-            </span>
-            <span className="m-st">Agente Nhandu · online</span>
-          </span>
-        </div>
-        <div className="m-chat-body" ref={body}>
-          <div className="m-track" ref={track}>
-            {BUBBLES.map((b) => (
-              <div key={b.t} className={cx('m-it', 'm-b', b.out ? 'm-out' : 'm-in', on(b.at) && 'on')}>
-                {b.t}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className={cx('m-link', on(1) && 'on')} aria-hidden="true" />
-
-      <div className="m-card m-ficha" aria-hidden="true">
-        <div className="m-ficha-hd">
-          <span className="m-mono m-mu">Paciente #0481</span>
-          <span key={chip[0]} className={cx('m-chip', 'm-' + chip[0], on(1) && 'on')}>{chip[1]}</span>
-        </div>
-        <div className="m-title">
-          <span className={cx('m-it', 'm-ident', on(1) && !on(2) && 'on')}>Identificando interesse…</span>
-          <span className={cx('m-it', 'm-name', on(2) && 'on')}>Clareamento dental</span>
-        </div>
-        <dl className="m-rows">
-          <div className={cx('m-it', 'm-row', on(2) && 'on')}><dt>Origem</dt><dd className="m-mono">landing/instagram</dd></div>
-          <div className={cx('m-it', 'm-row', on(3) && 'on')}><dt>Preferência</dt><dd className="m-mono">tarde, após 17h</dd></div>
-          <div className={cx('m-it', 'm-row', on(6) && 'on')}><dt>Horário</dt><dd className="m-mono">qui · 17:30</dd></div>
-          <div className={cx('m-it', 'm-row', on(6) && 'on')}><dt>Responsável</dt><dd className="m-mono">recepção</dd></div>
-        </dl>
-      </div>
-
-      <div className={cx('m-link', on(6) && 'on')} aria-hidden="true" />
-
-      <div className="m-card m-agenda" aria-hidden="true">
-        <div className="m-agenda-hd m-mono">
-          <span>Agenda · qui, 12 nov</span>
-          <span className="m-sync"><i />sincronizada</span>
-        </div>
-        <ul className="m-slots">
-          <li><span className="m-mono">09:00</span><span>Limpeza · Marcos S.</span></li>
-          <li><span className="m-mono">14:00</span><span>Retorno · Pedro A.</span></li>
-          <li><span className="m-mono">16:30</span><em>livre</em></li>
-          <li className="m-book">
-            <i className={cx('m-hl', on(7) && 'on')} />
-            <span className="m-mono">17:30</span>
-            <span className="m-slot-txt">
-              <em className={cx('m-it', 'm-free', !on(7) && 'on')}>livre</em>
-              <span className={cx('m-it', 'm-booked', on(7) && 'on')}>
-                <b>Clareamento · paciente #0481</b>
-                <small>via agente no WhatsApp</small>
-              </span>
-            </span>
-          </li>
-          <li><span className="m-mono">18:30</span><em>livre</em></li>
-        </ul>
-        <p className={cx('m-it', 'm-note', on(8) && 'on')}>
-          <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6.3l2.4 2.4 4.6-4.9" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
-          Recepção avisada, resumo da conversa enviado
-        </p>
-      </div>
+    <div ref={root} className="mdemo" role="group" aria-label="Demonstração em vídeo: do primeiro oi à agenda">
+      <video ref={video} className="mdemo-video" src={DEMO_SRC} poster={DEMO_POSTER} muted loop playsInline preload="metadata" aria-hidden="true" />
+      <button type="button" className="mdemo-btn" aria-label={paused ? 'Retomar demonstração' : 'Pausar demonstração'} onClick={() => setPaused((p) => !p)}>
+        {paused ? PLAY : PAUSE}
+      </button>
     </div>
   );
 }
@@ -282,7 +150,7 @@ function MobileDemo({ narrow, reduced }) {
 
   useEffect(() => {
     const frame = document.querySelector('.nh .vframe');
-    const video = frame && frame.querySelector('video');
+    const video = frame && frame.querySelector(':scope > video');
     if (!narrow || !frame) {
       setHost(null);
       return undefined;
@@ -300,7 +168,9 @@ function MobileDemo({ narrow, reduced }) {
       mo.observe(document.body, { childList: true, subtree: true });
     }
 
-    // O boot() do NhanduPage chama play() ~80 ms depois do mount: segura o vídeo pausado enquanto for celular.
+    // O vídeo 16:9 do NhanduPage fica oculto no celular e, aberto no celular, nem carrega (o <source> dele só vale
+    // acima de 640 px). O boot() do NhanduPage chama play() ~80 ms depois do mount: o `hold` o mantém pausado
+    // enquanto for celular (o play() pendente é rejeitado e o NhanduPage deixa o botão dele em "Reproduzir").
     let resume = false;
     const hold = () => video.pause();
     if (video) {
@@ -312,6 +182,12 @@ function MobileDemo({ narrow, reduced }) {
       if (mo) mo.disconnect();
       if (video) {
         video.removeEventListener('play', hold);
+        // Passou para desktop sem nunca ter carregado: refaz a escolha do <source>, que agora casa.
+        // Sem retomada (movimento reduzido), o autoplay do elemento não pode tocar por conta própria nesse load().
+        if (!video.currentSrc) {
+          if (!resume) video.autoplay = false;
+          video.load();
+        }
         // Retoma pelo controle do NhanduPage (toggleDemo dá play() e zera demoPaused), para o botão
         // não ficar em "Reproduzir" com o vídeo tocando. Se já toca, não clica (o clique pausaria).
         if (resume && video.paused) {

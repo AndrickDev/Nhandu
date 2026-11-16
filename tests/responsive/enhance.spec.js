@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { openAt } from './helpers';
 
-// Melhorias só de celular (mobile-refino, T03): demo vertical no lugar do vídeo e CTA fixo inteligente.
+// Melhorias só de celular (mobile-refino, T03): vídeo vertical da demo no lugar do 16:9 e CTA fixo inteligente.
 
 // Abre a página e zera o scroll suave (o page.css liga scroll-behavior:smooth sem reduce).
 async function openForScroll(page, width, height) {
@@ -26,72 +26,123 @@ const centerFrame = async (page) => {
   await frames(page);
 };
 
-const step = (page) => page.locator('.vframe .mdemo').getAttribute('data-step').then(Number);
+// Estado do vídeo vertical da demo (o que o MobileEnhance monta dentro da .vframe).
+const demo = (page) =>
+  page.evaluate(() => {
+    const v = document.querySelector('.vframe .mdemo-video');
+    return v && { paused: v.paused, t: v.currentTime, ready: v.readyState, w: v.videoWidth, h: v.videoHeight, error: v.error ? v.error.code : 0 };
+  });
 
-test.describe('demo mobile: substitui o vídeo', () => {
+// O vídeo é H.264: um Chromium sem esse codec não o toca (rode com PW_CHANNEL=chrome); Chrome e Safari tocam.
+async function needsH264(page) {
+  const ok = await page.evaluate(() => document.createElement('video').canPlayType('video/mp4; codecs="avc1.640028"') !== '');
+  test.skip(!ok, 'navegador sem H.264 (use PW_CHANNEL=chrome)');
+}
+
+const playing = (page) => expect.poll(async () => { const a = await demo(page); await page.waitForTimeout(400); const b = await demo(page); return !b.paused && b.t !== a.t; }, { timeout: 10000 });
+
+test.describe('demo mobile: vídeo vertical no lugar do 16:9', () => {
   test.use({ reducedMotion: 'no-preference' });
   for (const width of [320, 390, 640]) {
     test(`${width}px`, async ({ page }) => {
-      await openAt(page, '/', width);
-      await page.waitForTimeout(500);
+      await openForScroll(page, width, 844);
+      await needsH264(page);
+      await centerFrame(page);
       const info = await page.evaluate(() => {
-        const v = document.querySelector('.vframe video');
-        const d = document.querySelector('.vframe .mdemo');
+        const f = document.querySelector('.vframe');
+        const old = f.querySelector(':scope > video');
+        const v = f.querySelector('.mdemo-video');
+        const fr = f.getBoundingClientRect();
+        const vr = v.getBoundingClientRect();
         return {
-          videoShown: !!v && v.getBoundingClientRect().width > 0 && getComputedStyle(v).display !== 'none',
-          paused: v.paused,
-          demoH: d ? d.getBoundingClientRect().height : 0,
+          oldShown: getComputedStyle(old).display !== 'none',
+          oldPaused: old.paused,
+          oldSrc: old.currentSrc,
+          oldBtnShown: getComputedStyle(f.querySelector('.vbtn')).display !== 'none',
+          frame: [fr.width, fr.height],
+          video: [vr.width, vr.height],
+          shown: getComputedStyle(v).display !== 'none' && getComputedStyle(v).visibility === 'visible',
+          src: v.getAttribute('src'),
+          poster: v.getAttribute('poster'),
+          attrs: [v.muted, v.loop, v.playsInline, v.preload, v.autoplay],
         };
       });
-      expect(info.videoShown, 'vídeo visível').toBe(false);
-      expect(info.paused, 'vídeo tocando escondido').toBe(true);
-      expect(info.demoH).toBeGreaterThanOrEqual(360);
+      expect(info.oldShown, 'vídeo 16:9 visível no celular').toBe(false);
+      expect(info.oldBtnShown, 'botão do vídeo 16:9 visível no celular').toBe(false);
+      expect(info.oldPaused, 'vídeo 16:9 tocando escondido').toBe(true);
+      expect(info.oldSrc, 'vídeo 16:9 carregado no celular').toBe('');
+      expect(info.shown, 'vídeo vertical oculto').toBe(true);
+      expect(info.src).toBe('/media/demo-mobile.mp4');
+      expect(info.poster).toBe('/media/demo-mobile-poster.jpg');
+      expect(info.attrs).toEqual([true, true, true, 'metadata', false]);
+      // O vídeo ocupa o quadro inteiro e o quadro tem a proporção 9:16 (sem pulo de layout nem faixas).
+      expect(Math.abs(info.video[0] - info.frame[0])).toBeLessThanOrEqual(3);
+      expect(Math.abs(info.video[1] - info.frame[1])).toBeLessThanOrEqual(3);
+      expect(Math.abs(info.frame[0] / info.frame[1] - 9 / 16)).toBeLessThan(0.01);
+      expect(info.frame[0]).toBeLessThanOrEqual(width - 40 + 0.5);
+      // Toca sozinho com o quadro na tela, e o arquivo é o vertical.
+      await playing(page).toBe(true);
+      const st = await demo(page);
+      expect(st.error).toBe(0);
+      expect(st.h, 'vídeo não é vertical').toBeGreaterThan(st.w);
     });
   }
 });
 
-test.describe('demo mobile: legível e tocável', () => {
+// O celular não baixa o vídeo 16:9 (o <source> dele só vale acima de 640 px); o desktop não baixa o vertical (teste abaixo).
+test.describe('demo mobile: celular não baixa o vídeo de desktop', () => {
   test.use({ reducedMotion: 'no-preference' });
-  test('390px', async ({ page }) => {
-    await openAt(page, '/', 390);
-    const info = await page.evaluate(() => {
-      const d = document.querySelector('.vframe .mdemo');
-      const small = [];
-      const tw = document.createTreeWalker(d, NodeFilter.SHOW_TEXT);
-      for (let n = tw.nextNode(); n; n = tw.nextNode()) {
-        if (!n.nodeValue.trim()) continue;
-        const size = parseFloat(getComputedStyle(n.parentElement).fontSize);
-        if (size < 11) small.push(`${n.nodeValue.trim().slice(0, 20)} ${size}px`);
-      }
-      const b = document.querySelector('.vframe .mdemo-btn').getBoundingClientRect();
-      return { small, w: b.width, h: b.height, label: document.querySelector('.vframe .mdemo-btn').getAttribute('aria-label') };
+  for (const width of [320, 390, 640]) {
+    test(`${width}px`, async ({ page }) => {
+      const media = [];
+      page.on('request', (r) => /\/media\/demo[^/]*\.mp4/.test(r.url()) && media.push(new URL(r.url()).pathname));
+      await openForScroll(page, width, 844);
+      await centerFrame(page);
+      await page.waitForTimeout(1500);
+      expect(media.filter((u) => u === '/media/demo.mp4'), 'celular pediu o vídeo de desktop').toEqual([]);
+      expect(media).toContain('/media/demo-mobile.mp4');
     });
-    expect(info.small).toEqual([]);
-    expect(info.w).toBeGreaterThanOrEqual(44);
-    expect(info.h).toBeGreaterThanOrEqual(44);
-    expect(info.label).toBeTruthy();
-  });
+  }
 });
 
-test.describe('demo mobile: avança, pausa e retoma', () => {
+test.describe('demo mobile: botão tocável', () => {
+  test.use({ reducedMotion: 'no-preference' });
+  for (const width of [320, 390, 640]) {
+    test(`${width}px`, async ({ page }) => {
+      await openAt(page, '/', width);
+      const info = await page.evaluate(() => {
+        const btn = document.querySelector('.vframe .mdemo-btn');
+        const b = btn.getBoundingClientRect();
+        const f = document.querySelector('.vframe').getBoundingClientRect();
+        return { w: b.width, h: b.height, inside: b.left >= f.left && b.right <= f.right && b.top >= f.top && b.bottom <= f.bottom, label: btn.getAttribute('aria-label') };
+      });
+      expect(info.w).toBeGreaterThanOrEqual(44);
+      expect(info.h).toBeGreaterThanOrEqual(44);
+      expect(info.inside, 'botão fora do quadro').toBe(true);
+      expect(info.label).toBe('Pausar demonstração');
+    });
+  }
+});
+
+test.describe('demo mobile: toca, pausa e retoma', () => {
   test.use({ reducedMotion: 'no-preference' });
   test('390px', async ({ page }) => {
     await openForScroll(page, 390, 844);
+    await needsH264(page);
     await centerFrame(page);
-    const first = await step(page);
-    await page.waitForTimeout(3000);
-    expect(await step(page), 'não avançou em 3 s').toBeGreaterThan(first);
+    await playing(page).toBe(true);
     const btn = page.locator('.vframe .mdemo-btn');
     await expect(btn).toHaveAttribute('aria-label', 'Pausar demonstração');
     await btn.click();
     await expect(btn).toHaveAttribute('aria-label', 'Retomar demonstração');
-    const held = await step(page);
-    await page.waitForTimeout(2000);
-    expect(await step(page), 'avançou pausada').toBe(held);
+    await expect.poll(async () => (await demo(page)).paused).toBe(true);
+    const held = (await demo(page)).t;
+    await page.waitForTimeout(1500);
+    expect((await demo(page)).t, 'avançou pausado').toBe(held);
     await btn.click();
     await expect(btn).toHaveAttribute('aria-label', 'Pausar demonstração');
-    await page.waitForTimeout(3000);
-    expect(await step(page), 'não retomou').not.toBe(held);
+    await playing(page).toBe(true);
+    expect((await demo(page)).t, 'não retomou de onde parou').toBeGreaterThan(held);
   });
 });
 
@@ -99,24 +150,61 @@ test.describe('demo mobile: para fora da tela', () => {
   test.use({ reducedMotion: 'no-preference' });
   test('390px', async ({ page }) => {
     await openForScroll(page, 390, 844);
-    await page.waitForTimeout(300);
-    const before = await step(page);
-    await page.waitForTimeout(2000);
-    expect(await step(page), 'avançou fora da tela').toBe(before);
+    await needsH264(page);
+    // No topo da página o quadro está fora da tela: não toca.
+    await expect.poll(async () => (await demo(page)).paused).toBe(true);
+    const still = (await demo(page)).t;
+    await page.waitForTimeout(1500);
+    expect(await demo(page)).toMatchObject({ paused: true, t: still });
+    await centerFrame(page);
+    await playing(page).toBe(true);
+    // Saiu da tela: pausa; o botão segue em "Pausar" (não foi a pessoa que pausou) e volta a tocar ao retornar.
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+    await expect.poll(async () => (await demo(page)).paused).toBe(true);
+    await expect(page.locator('.vframe .mdemo-btn')).toHaveAttribute('aria-label', 'Pausar demonstração');
+    await centerFrame(page);
+    await playing(page).toBe(true);
   });
 });
 
+test.describe('demo mobile: pausa da pessoa vale ao voltar para a tela', () => {
+  test.use({ reducedMotion: 'no-preference' });
+  test('390px', async ({ page }) => {
+    await openForScroll(page, 390, 844);
+    await needsH264(page);
+    await centerFrame(page);
+    await playing(page).toBe(true);
+    await page.locator('.vframe .mdemo-btn').click();
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+    await frames(page, 3);
+    await centerFrame(page);
+    await page.waitForTimeout(1000);
+    expect((await demo(page)).paused, 'voltou a tocar sozinho depois de pausado').toBe(true);
+  });
+});
+
+// Com movimento reduzido o vídeo não toca sozinho: fica no poster (o estado final da história) e o botão oferece tocar.
 test.describe('demo mobile: movimento reduzido', () => {
   test.use({ reducedMotion: 'reduce' });
   test('390px', async ({ page }) => {
     await openForScroll(page, 390, 844);
     await centerFrame(page);
-    await page.waitForTimeout(500);
-    const last = await page.evaluate(() => Number(document.querySelector('.vframe .mdemo').dataset.last));
-    expect(last).toBeGreaterThan(0);
-    expect(await step(page)).toBe(last);
-    const running = await page.evaluate(() => document.querySelector('.vframe .mdemo').getAnimations({ subtree: true }).length);
-    expect(running).toBe(0);
+    await page.waitForTimeout(1500);
+    expect(await demo(page)).toMatchObject({ paused: true, t: 0 });
+    expect(await page.locator('.vframe .mdemo-video').getAttribute('poster')).toBe('/media/demo-mobile-poster.jpg');
+    const poster = await page.evaluate(async () => {
+      const img = new Image();
+      img.src = document.querySelector('.vframe .mdemo-video').poster;
+      await img.decode();
+      return [img.naturalWidth, img.naturalHeight];
+    });
+    expect(poster[1], 'poster não é vertical').toBeGreaterThan(poster[0]);
+    const btn = page.locator('.vframe .mdemo-btn');
+    await expect(btn).toHaveAttribute('aria-label', 'Retomar demonstração');
+    await needsH264(page);
+    await btn.click();
+    await expect(btn).toHaveAttribute('aria-label', 'Pausar demonstração');
+    await playing(page).toBe(true);
   });
 });
 
@@ -125,105 +213,100 @@ test.describe('demo mobile: sobrevive ao re-render', () => {
   test.use({ reducedMotion: 'no-preference' });
   test('390px', async ({ page }) => {
     await openAt(page, '/', 390);
-    await expect(page.locator('.vframe .mdemo')).toHaveCount(1);
+    await expect(page.locator('.vframe .mdemo-video')).toHaveCount(1);
     await page.evaluate(() => {
-      window.__mdemo = document.querySelector('.vframe .mdemo');
+      window.__mdemo = document.querySelector('.vframe .mdemo-video');
     });
     const tab = page.locator('.ptabs button', { hasText: 'Imobiliária' });
     await expect(tab).toHaveAttribute('aria-pressed', 'false');
     await tab.click();
     await expect(tab, 'aba não mudou: sem re-render').toHaveAttribute('aria-pressed', 'true');
     await frames(page, 3);
-    expect(await page.evaluate(() => document.querySelector('.vframe .mdemo') === window.__mdemo), 'demo remontada ou perdida').toBe(true);
+    expect(await page.evaluate(() => document.querySelector('.vframe .mdemo-video') === window.__mdemo), 'vídeo remontado ou perdido').toBe(true);
     expect(await page.evaluate(() => window.__mdemo.isConnected)).toBe(true);
     await expect(page.locator('.vframe .mdemo-btn')).toHaveCount(1);
+    // O re-render não faz o vídeo 16:9 escondido carregar.
+    expect(await page.evaluate(() => document.querySelector('.vframe > video').currentSrc)).toBe('');
   });
 });
 
-// Review F-003: com movimento reduzido a demo é estática; o botão de pausa não aparece.
-test.describe('demo mobile: sem botão de pausa com movimento reduzido', () => {
-  test.use({ reducedMotion: 'reduce' });
-  test('390px', async ({ page }) => {
-    await openAt(page, '/', 390);
-    await expect(page.locator('.vframe .mdemo')).toHaveCount(1);
-    await expect(page.locator('.vframe .mdemo-btn')).toHaveCount(0);
-  });
-});
-
-// Review F-007: pausar no esmaecimento do fim do laço não deixa o quadro vazio nem esconde o botão.
-test.describe('demo mobile: pausa no fim do laço', () => {
-  test.use({ reducedMotion: 'no-preference' });
-  test('390px', async ({ page }) => {
-    test.setTimeout(45000);
-    await openForScroll(page, 390, 844);
-    await centerFrame(page);
-    await expect.poll(() => step(page), { timeout: 20000, intervals: [50] }).toBe(9);
-    const btn = page.locator('.vframe .mdemo-btn');
-    await page.waitForTimeout(500);
-    // Opacidade efetiva: produto da do botão com a de todos os ancestrais.
-    const effective = await btn.evaluate((el) => {
-      let o = 1;
-      for (let n = el; n && n.nodeType === 1; n = n.parentElement) o *= parseFloat(getComputedStyle(n).opacity);
-      return o;
-    });
-    expect(effective, 'botão esmaecido junto com a demo').toBe(1);
-    await btn.click();
-    await expect(btn).toHaveAttribute('aria-label', 'Retomar demonstração');
-    const last = Number(await page.locator('.vframe .mdemo').getAttribute('data-last'));
-    expect(await step(page), 'pausada fora do passo final').toBe(last);
-    await page.waitForTimeout(700);
-    const cards = await page.evaluate(() =>
-      [...document.querySelectorAll('.vframe .mdemo > .m-card')].map((el) => parseFloat(getComputedStyle(el).opacity)),
-    );
-    expect(cards.every((o) => o === 1), `cartões visíveis: ${cards}`).toBe(true);
-    await btn.click();
-    await expect(btn).toHaveAttribute('aria-label', 'Pausar demonstração');
-    await expect.poll(() => step(page), { timeout: 8000, intervals: [100] }).not.toBe(last);
-  });
-});
-
-test.describe('demo mobile: desktop mantém o vídeo', () => {
+test.describe('demo mobile: desktop mantém o vídeo 16:9', () => {
   test.use({ reducedMotion: 'no-preference' });
   for (const width of [641, 1280]) {
     test(`${width}px`, async ({ page }) => {
-      await openAt(page, '/', width, 900);
+      const mobile = [];
+      page.on('request', (r) => /demo-mobile/.test(r.url()) && mobile.push(r.url()));
+      await openForScroll(page, width, 900);
+      await needsH264(page);
+      await centerFrame(page);
+      await page.waitForTimeout(800);
       const info = await page.evaluate(() => {
-        const d = document.querySelector('.vframe .mdemo');
-        const v = document.querySelector('.vframe video');
+        const f = document.querySelector('.vframe');
+        const v = f.querySelector(':scope > video');
+        const r = f.getBoundingClientRect();
+        const b = f.querySelector('.vbtn');
         return {
-          demoShown: !!d && d.getBoundingClientRect().width > 0 && getComputedStyle(d).display !== 'none',
+          demo: document.querySelectorAll('.mdemo, .mdemo-video, .mdemo-btn, .mdemo-host').length,
           videoShown: v.getBoundingClientRect().width > 0 && getComputedStyle(v).display !== 'none',
+          src: new URL(v.currentSrc).pathname,
+          ratio: r.width / r.height,
+          bg: getComputedStyle(f).backgroundImage,
+          btnShown: getComputedStyle(b).display !== 'none',
+          label: b.getAttribute('aria-label'),
+          paused: v.paused,
         };
       });
-      expect(info.demoShown, 'demo aparece no desktop').toBe(false);
+      expect(info.demo, 'vídeo vertical montado no desktop').toBe(0);
+      expect(mobile, 'desktop baixou arquivo da demo mobile').toEqual([]);
       expect(info.videoShown, 'vídeo sumiu').toBe(true);
+      expect(info.src).toBe('/media/demo.mp4');
+      expect(Math.abs(info.ratio - 16 / 9)).toBeLessThan(0.01);
+      expect(info.bg).toBe('none');
+      expect(info.btnShown).toBe(true);
+      expect(info.label).toBe('Pausar a demonstração');
+      expect(info.paused, 'vídeo 16:9 parado no desktop').toBe(false);
     });
   }
 });
 
-test.describe('demo mobile: vídeo e botão coerentes ao passar para desktop', () => {
+test.describe('demo mobile: vídeo e botão coerentes ao cruzar 640 px', () => {
   test.use({ reducedMotion: 'no-preference' });
-  test('390px para 1024px', async ({ page }) => {
-    // O boot() do NhanduPage chama play() uma vez; o `hold` do celular o aborta e o catch dele marca
-    // demoPaused = true. A corrida depende de tempo, então o 1º play() é rejeitado de forma determinística.
-    await page.addInitScript(() => {
-      const play = HTMLMediaElement.prototype.play;
-      let first = true;
-      HTMLMediaElement.prototype.play = function () {
-        if (first) {
-          first = false;
-          return Promise.reject(new DOMException('aborted by pause()', 'AbortError'));
-        }
-        return play.call(this);
-      };
-    });
+  test('390px para 1024px e de volta', async ({ page }) => {
+    // Aberto no celular, o vídeo 16:9 não carrega (o <source> só vale acima de 640 px): o play() do boot() do
+    // NhanduPage falha e ele marca demoPaused = true. Ao passar para desktop o vídeo carrega e toca pelo próprio
+    // controle, com o rótulo certo.
     await openAt(page, '/', 390, 844);
+    await needsH264(page);
     await page.waitForTimeout(1000);
     await page.setViewportSize({ width: 1024, height: 768 });
-    await expect
-      .poll(() => page.evaluate(() => !document.querySelector('.vframe video').paused), { timeout: 3000 })
-      .toBe(true);
+    await expect.poll(() => page.evaluate(() => !document.querySelector('.vframe > video').paused), { timeout: 5000 }).toBe(true);
     await expect(page.locator('.vframe .vbtn')).toHaveAttribute('aria-label', 'Pausar a demonstração');
+    expect(await page.evaluate(() => new URL(document.querySelector('.vframe > video').currentSrc).pathname)).toBe('/media/demo.mp4');
+    await expect(page.locator('.mdemo')).toHaveCount(0);
+    // De volta ao celular: o 16:9 para; o vertical volta.
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.locator('.vframe .mdemo-video')).toHaveCount(1);
+    await expect.poll(() => page.evaluate(() => document.querySelector('.vframe > video').paused)).toBe(true);
+  });
+});
+
+// Com movimento reduzido, cruzar 640 px não põe o vídeo 16:9 para tocar sozinho (como no desktop aberto direto).
+test.describe('demo mobile: cruzar 640 px com movimento reduzido', () => {
+  test.use({ reducedMotion: 'reduce' });
+  test('390px para 1024px', async ({ page }) => {
+    await openAt(page, '/', 390, 844);
+    await needsH264(page);
+    await page.waitForTimeout(1000);
+    await page.setViewportSize({ width: 1024, height: 768 });
+    await expect(page.locator('.mdemo')).toHaveCount(0);
+    await expect.poll(() => page.evaluate(() => document.querySelector('.vframe > video').readyState), { timeout: 5000 }).toBeGreaterThanOrEqual(2);
+    await page.waitForTimeout(800);
+    expect(await page.evaluate(() => { const v = document.querySelector('.vframe > video'); return [v.paused, v.currentTime]; })).toEqual([true, 0]);
+    const btn = page.locator('.vframe .vbtn');
+    await expect(btn).toHaveAttribute('aria-label', 'Reproduzir a demonstração');
+    await btn.click();
+    await expect(btn).toHaveAttribute('aria-label', 'Pausar a demonstração');
+    await expect.poll(() => page.evaluate(() => !document.querySelector('.vframe > video').paused)).toBe(true);
   });
 });
 
@@ -343,45 +426,6 @@ test.describe('CTA fixo: some sobre as fotos do time', () => {
       expect(back, 'o CTA volta entre as fotos ao menos uma vez').toBeGreaterThan(0);
     });
   }
-});
-
-// Review F-001: texto de 11 px dos chips da ficha precisa de contraste WCAG AA (4,5:1).
-test.describe('demo mobile: contraste dos chips da ficha', () => {
-  test.use({ reducedMotion: 'reduce' });
-  test('390px', async ({ page }) => {
-    await openForScroll(page, 390, 844);
-    const chips = await page.evaluate(() => {
-      const parse = (s) => {
-        const m = s.match(/[\d.]+/g).map(Number);
-        return { r: m[0], g: m[1], b: m[2], a: m.length > 3 ? m[3] : 1 };
-      };
-      const over = (top, bot) => ({
-        r: top.r * top.a + bot.r * (1 - top.a),
-        g: top.g * top.a + bot.g * (1 - top.a),
-        b: top.b * top.a + bot.b * (1 - top.a),
-        a: 1,
-      });
-      const lum = ({ r, g, b }) => {
-        const f = (v) => ((v /= 255) <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4));
-        return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
-      };
-      const el = document.querySelector('.vframe .m-chip');
-      const saved = el.className;
-      const out = ['m-n', 'm-q', 'm-ok'].map((state) => {
-        el.className = `m-chip on ${state}`;
-        const cs = getComputedStyle(el);
-        const card = parse(getComputedStyle(el.closest('.m-ficha')).backgroundColor);
-        const bg = over(parse(cs.backgroundColor), card);
-        const fg = parse(cs.color);
-        const [a, b] = [lum(fg), lum(bg)].sort((x, y) => y - x);
-        return { cls: state, size: parseFloat(cs.fontSize), ratio: (a + 0.05) / (b + 0.05) };
-      });
-      el.className = saved;
-      return out;
-    });
-    expect(chips.length).toBeGreaterThanOrEqual(3);
-    for (const c of chips) expect(c.ratio, `${c.cls} (${c.size}px) razão ${c.ratio.toFixed(2)}`).toBeGreaterThanOrEqual(4.5);
-  });
 });
 
 // Review F-002: com o CTA fixo escondido, o foco por teclado não pode cair num controle invisível.

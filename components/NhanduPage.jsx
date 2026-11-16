@@ -1077,7 +1077,7 @@ class NhanduPage extends React.Component {
 <p className={"lead"}>A conversa acontece no WhatsApp. Ao mesmo tempo, a ficha se preenche e o horário aparece na agenda da recepção, com o resumo pronto para a equipe.</p>
 </div>
 <figure className={"vframe rv"}>
-<video ref={setDemo} src={demoSrc} poster={demoPoster} muted={true} loop={true} playsInline={true} autoPlay={true} preload={"metadata"} aria-hidden={"true"}></video>
+<video ref={setDemo} poster={demoPoster} muted={true} loop={true} playsInline={true} autoPlay={true} preload={"metadata"} aria-hidden={"true"}><source src={demoSrc} media={"(min-width:641px)"} /></video>
 <figcaption className={"sr"}>Demonstração: a paciente pergunta sobre clareamento, o agente oferece quinta às 17h30, a ficha passa de novo contato para qualificado e agendado, e o horário aparece na agenda da recepção.</figcaption>
 <button type={"button"} className={"vbtn"} aria-label={demoLabel} onClick={toggleDemo}>
 {(demoPaused) && (<><svg width={"16"} height={"16"} viewBox={"0 0 16 16"} aria-hidden={"true"}><path d={"M4 2.5v11l9-5.5z"} fill={"currentColor"}></path></svg></>)}
