@@ -218,6 +218,35 @@ test.describe('CTA fixo: some perto de CTA equivalente', () => {
   });
 });
 
+// Review F-006: o CTA fixo não cobre nada do hero (texto na abertura em telas baixas, agenda do celular).
+test.describe('CTA fixo: some em todo o hero', () => {
+  test.use({ reducedMotion: 'no-preference' });
+  for (const [w, h] of [[320, 568], [390, 844]]) {
+    test(`${w}x${h}`, async ({ page }) => {
+      await openForScroll(page, w, h);
+      const opacity = () => page.locator('.mcta').evaluate((el) => parseFloat(getComputedStyle(el).opacity));
+      const settle = async () => {
+        await frames(page, 3);
+        await page.waitForTimeout(700);
+      };
+      await settle();
+      expect(await opacity(), 'abertura').toBeLessThan(0.05);
+      for (const sel of ['#topo .phone', '#topo .agc']) {
+        await page.evaluate((s) => document.querySelector(s).scrollIntoView({ block: 'center' }), sel);
+        await settle();
+        expect(await opacity(), sel).toBeLessThan(0.05);
+      }
+      // Fim do hero colado na base da tela: ainda escondido.
+      await page.evaluate(() => {
+        const r = document.querySelector('#topo').getBoundingClientRect();
+        window.scrollTo({ top: r.bottom + window.scrollY - window.innerHeight + 4, behavior: 'instant' });
+      });
+      await settle();
+      expect(await opacity(), 'fim do hero').toBeLessThan(0.05);
+    });
+  }
+});
+
 // Review F-001: texto de 11 px dos chips da ficha precisa de contraste WCAG AA (4,5:1).
 test.describe('demo mobile: contraste dos chips da ficha', () => {
   test.use({ reducedMotion: 'reduce' });

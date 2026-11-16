@@ -179,3 +179,9 @@ Passo do controlador depois da onda 3: build de produção em :3100; `npx playwr
 | RF CTA invisível clicável | T03 | enhance.spec › CTA fixo (pointer-events) |
 | RF canvas | T02 | refino.spec › fundo ASCII |
 | RF vazamento p/ desktop | T01 | desktop.spec |
+
+## Emenda 1 (2026-11-15, pós-R10, decisão do usuário "e" → F-006 opção b)
+- AC-8 ampliado: o CTA fixo também some enquanto qualquer parte do hero (`#topo`) estiver na tela (antes: só `#topo .cta-row`). Motivo: em 320×568 o CTA fixo cobria o texto do hero na abertura e, em qualquer largura, a agenda do celular (prints 3 e 12, F-006).
+- Files: `components/MobileEnhance.jsx` (CTA_TARGETS), `tests/responsive/enhance.spec.js` (CTA fixo: some em todo o hero, 320×568 e 390×844).
+- Fora: foto de #time (opção c) não entra.
+- Ajuste de teste (F-012): `tests/responsive/visual.spec.js` esconde cabeçalho e CTA fixos nas capturas de seção (`tests/responsive/visual-overlays.css`), porque a posição deles dependia da rolagem da captura e 10 casos falhavam já na HEAD 9a493a6.

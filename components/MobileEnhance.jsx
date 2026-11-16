@@ -26,8 +26,9 @@ function useMedia(query) {
 /* ---------- CTA fixo ---------- */
 
 // Alvos cuja presença na tela torna o CTA fixo redundante (ou atrapalha, como a história fixa).
+// O hero inteiro conta (F-006): já tem CTA próprio e o fixo cobriria o texto e a agenda do celular.
 const CTA_TARGETS = [
-  '#topo .cta-row',
+  '#topo',
   '.nh main a[href="#form-diag"]',
   '.nh main a[href="#comecar"]',
   '#form-diag',
