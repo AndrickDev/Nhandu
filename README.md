@@ -73,7 +73,11 @@ npm run test:mobile          # layout em cada largura + página em uso (pergunta
 npm run test:mobile:sweep    # varredura contínua de 320 a 480 px, de 2 em 2
 npm run test:mobile:update   # gera ou atualiza as imagens de referência
 npm run test:mobile:visual   # compara cada seção com a imagem de referência
+npm run test:desktop         # compara as seções no desktop real (1280 e 1440 px) com as referências
+npm run test:desktop:update  # gera as referências de desktop
 ```
+
+O `test:desktop` roda em contexto de desktop real (sem emulação de celular) em 1280 e 1440 px. Gere as referências na versão aprovada, antes de mexer em CSS, e compare depois: qualquer diferença no desktop aparece como falha. O visual também cobre a introdução de `#camadas` (`camadas-intro`) e o quadro do vídeo (`demo`). As referências ficam fora do git (dependem do sistema que as gerou); gere-as localmente.
 
 Por padrão a suíte compila o site e sobe um servidor local. Para testar um endereço publicado, use `BASE_URL`:
 

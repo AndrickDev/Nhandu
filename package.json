@@ -10,7 +10,9 @@
     "test:mobile:sweep": "SWEEP=1 playwright test layout",
     "test:seo": "playwright test -c playwright.seo.config.js",
     "test:mobile:visual": "playwright test visual",
-    "test:mobile:update": "playwright test visual --update-snapshots"
+    "test:mobile:update": "playwright test visual --update-snapshots",
+    "test:desktop": "playwright test desktop",
+    "test:desktop:update": "playwright test desktop --update-snapshots"
   },
   "dependencies": {
     "next": "15.5.29",
