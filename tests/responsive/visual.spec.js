@@ -1,5 +1,8 @@
 import { test, expect } from '@playwright/test';
+import path from 'node:path';
 import { KEY_WIDTHS, openAt } from './helpers';
+
+const OVERLAYS_CSS = path.join(__dirname, 'visual-overlays.css');
 
 // Comparação de imagem, seção por seção, contra a referência salva.
 // Gere ou atualize as referências com: npm run test:mobile:update
@@ -34,6 +37,8 @@ for (const [width, height] of VIEWPORTS) {
           // Desenhos em canvas e o vídeo mudam a cada quadro; ficam fora da comparação.
           mask: [page.locator('canvas'), page.locator('video')],
           maxDiffPixelRatio: 0.01,
+          // Overlays fixos fora da captura das seções (o próprio cabeçalho segue capturado).
+          ...(name === 'cabecalho' ? {} : { stylePath: OVERLAYS_CSS }),
         });
       });
     }
