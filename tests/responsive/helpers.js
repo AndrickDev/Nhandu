@@ -34,6 +34,12 @@ const IGNORE = ['.mq', '[aria-hidden="true"]'];
 export async function openAt(page, path, width, height = heightFor(width)) {
   await page.setViewportSize({ width, height });
   await page.goto(path, { waitUntil: 'load' });
+  // No celular, a demo do vídeo só existe depois da hidratação: medir ou capturar antes dela pega o quadro vazio.
+  await page.waitForFunction(
+    () => !document.querySelector('.vframe') || !matchMedia('(max-width:640px)').matches || document.querySelector('.vframe .mdemo'),
+    null,
+    { timeout: 15000 },
+  );
   await settle(page);
 }
 
