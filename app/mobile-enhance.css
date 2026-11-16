@@ -11,8 +11,8 @@
   .nh .vframe{aspect-ratio:auto;padding:14px;min-height:700px}
   .nh .vframe video,.nh .vframe .vbtn{display:none}
 
-  .nh .mdemo{position:relative;display:flex;flex-direction:column;font-family:'Geist',system-ui,sans-serif;color:var(--tx);transition:opacity .45s ease}
-  .nh .mdemo.is-out{opacity:0}
+  .nh .mdemo{position:relative;display:flex;flex-direction:column;font-family:'Geist',system-ui,sans-serif;color:var(--tx)}
+  .nh .mdemo > .m-card{transition:opacity .45s ease}
   .nh .mdemo .m-mono{font-family:'Geist Mono',ui-monospace,monospace}
   .nh .mdemo .m-mu{color:var(--mu)}
 
@@ -22,6 +22,8 @@
   /* Fio de ligação entre os blocos (12 px de respiro). */
   .nh .mdemo .m-link{align-self:center;width:0;height:12px;border-left:1px dashed var(--ln2);opacity:0;transition:opacity .45s ease}
   .nh .mdemo .m-link.on{opacity:1}
+  /* Esmaecimento do fim do laço: só o conteúdo; o botão de pausa segue visível (F-007). */
+  .nh .mdemo.is-out > :not(.mdemo-btn){opacity:0}
 
   /* Entradas: opacity + translateY(8px). */
   .nh .mdemo .m-it{opacity:0;transform:translateY(8px);transition:opacity .45s cubic-bezier(.2,.7,.2,1),transform .45s cubic-bezier(.2,.7,.2,1)}

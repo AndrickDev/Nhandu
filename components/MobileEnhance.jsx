@@ -128,13 +128,7 @@ function Demo({ reduced }) {
   const idx = useRef(0);
   const started = useRef(false);
 
-  // Reduced-motion: passo final fixo, sem timer (e volta ao normal se a preferência mudar).
-  useEffect(() => {
-    if (reduced) setStep(LAST);
-    else setStep(0);
-    idx.current = 0;
-    started.current = false;
-  }, [reduced]);
+  // Reduced-motion: passo final fixo, sem timer. A troca da preferência remonta a Demo (key no portal).
 
   // Só roda com a demo na tela.
   useEffect(() => {
@@ -184,14 +178,28 @@ function Demo({ reduced }) {
     return () => window.removeEventListener('resize', place);
   }, [step]);
 
+  // Pausar no esmaecimento (9) ou no quadro zerado (0) deixaria a demo vazia: mostra o passo final e,
+  // ao retomar, segue do esmaecimento.
+  const togglePause = () => {
+    if (!paused && (step === 9 || step === 0)) {
+      setStep(LAST);
+      idx.current = EVENTS.findIndex((e) => e[1] === 9);
+      started.current = true;
+    }
+    setPaused((p) => !p);
+  };
+
   const on = (n) => step >= n;
   const chip = step >= 6 ? ['ok', 'Agendado'] : step >= 3 ? ['q', 'Qualificado'] : ['n', 'Novo contato'];
 
   return (
     <div ref={root} className={cx('mdemo', step === 9 && 'is-out', step === 0 && 'is-reset')} data-step={step} data-last={LAST} role="group" aria-label="Demonstração animada: do primeiro oi à agenda">
-      <button type="button" className="mdemo-btn" aria-label={paused ? 'Retomar demonstração' : 'Pausar demonstração'} onClick={() => setPaused((p) => !p)}>
-        {paused ? PLAY : PAUSE}
-      </button>
+      {/* Com movimento reduzido a demo já é estática: sem botão de pausa. */}
+      {!reduced && (
+        <button type="button" className="mdemo-btn" aria-label={paused ? 'Retomar demonstração' : 'Pausar demonstração'} onClick={togglePause}>
+          {paused ? PLAY : PAUSE}
+        </button>
+      )}
 
       <div className="m-card m-chat" aria-hidden="true">
         <div className="m-chat-hd">
@@ -269,6 +277,8 @@ function Demo({ reduced }) {
 
 function MobileDemo({ narrow, reduced }) {
   const [host, setHost] = useState(null);
+  // Só em dev: o Fast Refresh pode remontar o NhanduPage e trocar o .vframe, deixando o portal num nó solto.
+  const [gen, setGen] = useState(0);
 
   useEffect(() => {
     const frame = document.querySelector('.nh .vframe');
@@ -282,6 +292,14 @@ function MobileDemo({ narrow, reduced }) {
     frame.appendChild(el);
     setHost(el);
 
+    let mo;
+    if (process.env.NODE_ENV !== 'production' && typeof MutationObserver !== 'undefined') {
+      mo = new MutationObserver(() => {
+        if (!el.isConnected) setGen((g) => g + 1);
+      });
+      mo.observe(document.body, { childList: true, subtree: true });
+    }
+
     // O boot() do NhanduPage chama play() ~80 ms depois do mount: segura o vídeo pausado enquanto for celular.
     let resume = false;
     const hold = () => video.pause();
@@ -291,6 +309,7 @@ function MobileDemo({ narrow, reduced }) {
       video.addEventListener('play', hold);
     }
     return () => {
+      if (mo) mo.disconnect();
       if (video) {
         video.removeEventListener('play', hold);
         // Retoma pelo controle do NhanduPage (toggleDemo dá play() e zera demoPaused), para o botão
@@ -307,7 +326,7 @@ function MobileDemo({ narrow, reduced }) {
       el.remove();
       setHost(null);
     };
-  }, [narrow]);
+  }, [narrow, gen]);
 
   return host ? createPortal(<Demo key={String(reduced)} reduced={reduced} />, host) : null;
 }

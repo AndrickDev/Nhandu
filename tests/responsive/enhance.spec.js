@@ -51,6 +51,7 @@ test.describe('demo mobile: substitui o vídeo', () => {
 });
 
 test.describe('demo mobile: legível e tocável', () => {
+  test.use({ reducedMotion: 'no-preference' });
   test('390px', async ({ page }) => {
     await openAt(page, '/', 390);
     const info = await page.evaluate(() => {
@@ -119,14 +120,65 @@ test.describe('demo mobile: movimento reduzido', () => {
   });
 });
 
+// Review F-005: o NhanduPage precisa de fato re-renderizar (troca de aba) e a demo seguir no mesmo nó.
 test.describe('demo mobile: sobrevive ao re-render', () => {
+  test.use({ reducedMotion: 'no-preference' });
   test('390px', async ({ page }) => {
     await openAt(page, '/', 390);
     await expect(page.locator('.vframe .mdemo')).toHaveCount(1);
-    await page.locator('.ptabs button', { hasText: 'Imobiliária' }).click();
-    await page.waitForTimeout(400);
-    await expect(page.locator('.vframe .mdemo')).toHaveCount(1);
+    await page.evaluate(() => {
+      window.__mdemo = document.querySelector('.vframe .mdemo');
+    });
+    const tab = page.locator('.ptabs button', { hasText: 'Imobiliária' });
+    await expect(tab).toHaveAttribute('aria-pressed', 'false');
+    await tab.click();
+    await expect(tab, 'aba não mudou: sem re-render').toHaveAttribute('aria-pressed', 'true');
+    await frames(page, 3);
+    expect(await page.evaluate(() => document.querySelector('.vframe .mdemo') === window.__mdemo), 'demo remontada ou perdida').toBe(true);
+    expect(await page.evaluate(() => window.__mdemo.isConnected)).toBe(true);
     await expect(page.locator('.vframe .mdemo-btn')).toHaveCount(1);
+  });
+});
+
+// Review F-003: com movimento reduzido a demo é estática; o botão de pausa não aparece.
+test.describe('demo mobile: sem botão de pausa com movimento reduzido', () => {
+  test.use({ reducedMotion: 'reduce' });
+  test('390px', async ({ page }) => {
+    await openAt(page, '/', 390);
+    await expect(page.locator('.vframe .mdemo')).toHaveCount(1);
+    await expect(page.locator('.vframe .mdemo-btn')).toHaveCount(0);
+  });
+});
+
+// Review F-007: pausar no esmaecimento do fim do laço não deixa o quadro vazio nem esconde o botão.
+test.describe('demo mobile: pausa no fim do laço', () => {
+  test.use({ reducedMotion: 'no-preference' });
+  test('390px', async ({ page }) => {
+    test.setTimeout(45000);
+    await openForScroll(page, 390, 844);
+    await centerFrame(page);
+    await expect.poll(() => step(page), { timeout: 20000, intervals: [50] }).toBe(9);
+    const btn = page.locator('.vframe .mdemo-btn');
+    await page.waitForTimeout(500);
+    // Opacidade efetiva: produto da do botão com a de todos os ancestrais.
+    const effective = await btn.evaluate((el) => {
+      let o = 1;
+      for (let n = el; n && n.nodeType === 1; n = n.parentElement) o *= parseFloat(getComputedStyle(n).opacity);
+      return o;
+    });
+    expect(effective, 'botão esmaecido junto com a demo').toBe(1);
+    await btn.click();
+    await expect(btn).toHaveAttribute('aria-label', 'Retomar demonstração');
+    const last = Number(await page.locator('.vframe .mdemo').getAttribute('data-last'));
+    expect(await step(page), 'pausada fora do passo final').toBe(last);
+    await page.waitForTimeout(700);
+    const cards = await page.evaluate(() =>
+      [...document.querySelectorAll('.vframe .mdemo > .m-card')].map((el) => parseFloat(getComputedStyle(el).opacity)),
+    );
+    expect(cards.every((o) => o === 1), `cartões visíveis: ${cards}`).toBe(true);
+    await btn.click();
+    await expect(btn).toHaveAttribute('aria-label', 'Pausar demonstração');
+    await expect.poll(() => step(page), { timeout: 8000, intervals: [100] }).not.toBe(last);
   });
 });
 

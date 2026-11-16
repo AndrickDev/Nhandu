@@ -183,12 +183,15 @@ test.describe('camadas: revisão da página sem sobreposição', () => {
         const dist = (p, b) => Math.hypot(Math.max(b.left - p.x, 0, p.x - b.right), Math.max(b.top - p.y, 0, p.y - b.bottom));
         const inter = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
         const p1 = c(pins[0]);
+        const ok = box(lv.querySelector('.fin > small'));
         return {
           wfHidden: hidden('.wf'),
           toHidden: hidden('.to'),
           pin1In: p1.x >= img.left && p1.x <= img.right && p1.y >= img.top && p1.y <= img.bottom,
           pin2Dist: dist(c(pins[1]), btn),
           pinOnHeading: pins.some((p) => inter(p, h)),
+          okOnBtn: inter(ok, btn),
+          pinOnOk: pins.some((p) => inter(p, ok)),
           lvBottom: lv.getBoundingClientRect().bottom,
           stickyBottom: document.querySelector('.sticky').getBoundingClientRect().bottom,
         };
@@ -198,6 +201,9 @@ test.describe('camadas: revisão da página sem sobreposição', () => {
       expect(info.pin1In, 'pino 1 fora da imagem').toBe(true);
       expect(info.pin2Dist, 'pino 2 longe do botão').toBeLessThanOrEqual(12);
       expect(info.pinOnHeading, 'pino sobre o título').toBe(false);
+      // Review F-008: rótulo "aprovada" fora do botão e dos pinos (print 7).
+      expect(info.okOnBtn, '"aprovada" sobre o botão').toBe(false);
+      expect(info.pinOnOk, 'pino sobre "aprovada"').toBe(false);
       expect(info.lvBottom, 'cartão passa do bloco fixo').toBeLessThanOrEqual(info.stickyBottom);
     });
   }
