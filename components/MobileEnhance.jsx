@@ -277,9 +277,15 @@ function MobileDemo({ narrow, reduced }) {
     return () => {
       if (video) {
         video.removeEventListener('play', hold);
-        if (resume) {
-          const p = video.play();
-          if (p && p.catch) p.catch(() => {});
+        // Retoma pelo controle do NhanduPage (toggleDemo dá play() e zera demoPaused), para o botão
+        // não ficar em "Reproduzir" com o vídeo tocando. Se já toca, não clica (o clique pausaria).
+        if (resume && video.paused) {
+          const btn = frame.querySelector('.vbtn');
+          if (btn) btn.click();
+          else {
+            const p = video.play();
+            if (p && p.catch) p.catch(() => {});
+          }
         }
       }
       el.remove();

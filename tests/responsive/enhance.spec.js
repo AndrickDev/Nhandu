@@ -149,6 +149,32 @@ test.describe('demo mobile: desktop mantém o vídeo', () => {
   }
 });
 
+test.describe('demo mobile: vídeo e botão coerentes ao passar para desktop', () => {
+  test.use({ reducedMotion: 'no-preference' });
+  test('390px para 1024px', async ({ page }) => {
+    // O boot() do NhanduPage chama play() uma vez; o `hold` do celular o aborta e o catch dele marca
+    // demoPaused = true. A corrida depende de tempo, então o 1º play() é rejeitado de forma determinística.
+    await page.addInitScript(() => {
+      const play = HTMLMediaElement.prototype.play;
+      let first = true;
+      HTMLMediaElement.prototype.play = function () {
+        if (first) {
+          first = false;
+          return Promise.reject(new DOMException('aborted by pause()', 'AbortError'));
+        }
+        return play.call(this);
+      };
+    });
+    await openAt(page, '/', 390, 844);
+    await page.waitForTimeout(1000);
+    await page.setViewportSize({ width: 1024, height: 768 });
+    await expect
+      .poll(() => page.evaluate(() => !document.querySelector('.vframe video').paused), { timeout: 3000 })
+      .toBe(true);
+    await expect(page.locator('.vframe .vbtn')).toHaveAttribute('aria-label', 'Pausar a demonstração');
+  });
+});
+
 test.describe('CTA fixo: some perto de CTA equivalente', () => {
   test.use({ reducedMotion: 'no-preference' });
   test('375x780', async ({ page }) => {
