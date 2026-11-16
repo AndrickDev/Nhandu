@@ -178,6 +178,48 @@ test('movimento: passo a passo ignora --vh', async ({ page }) => {
   }
 });
 
+// A rolagem dentro de .track é o que troca o passo (640 px por passo, NH_STEP no NhanduPage.jsx).
+// Falha também quando o JS da página não roda (servidor antigo servindo um build trocado): o passo fica no 01.
+test.describe('movimento: passo a passo avança com a rolagem', () => {
+  for (const [width, height, motion] of [[320, 568, 'reduce'], [390, 844, 'no-preference'], [390, 664, 'reduce'], [768, 1024, 'reduce'], [1024, 1024, 'no-preference']]) {
+    test(`${width}x${height}px (${motion})`, async ({ page }) => {
+      await page.emulateMedia({ reducedMotion: motion });
+      await openAt(page, '/', width, height);
+      const read = () =>
+        page.evaluate(() => {
+          const sticky = document.querySelector('.track .sticky');
+          const steps = [...document.querySelectorAll('.track .steps > .st')];
+          const on = steps.filter((s) => s.classList.contains('on'));
+          const bar = [...document.querySelectorAll('.track .mprog i')].map((i) => (i.classList.contains('on') ? '1' : '0')).join('');
+          return {
+            position: getComputedStyle(sticky).position,
+            top: Math.round(sticky.getBoundingClientRect().top),
+            active: on.map((s) => steps.indexOf(s)),
+            title: on[0]?.querySelector('.st-full h3')?.textContent.trim() ?? null,
+            bar,
+          };
+        });
+      const titles = [];
+      // Ida e volta: o passo acompanha a rolagem nos dois sentidos. 120 px dentro de cada passo (o 5º só dura 240 px).
+      for (const i of [0, 1, 2, 3, 4, 2, 0]) {
+        await page.evaluate((i) => {
+          document.documentElement.style.scrollBehavior = 'auto';
+          const track = document.querySelector('.track');
+          window.scrollTo({ top: window.scrollY + track.getBoundingClientRect().top - 68 + i * 640 + 120, behavior: 'instant' });
+        }, i);
+        await expect.poll(async () => (await read()).active, { message: `${width}px: passo ativo 120 px dentro do passo ${i + 1}` }).toEqual([i]);
+        const now = await read();
+        expect(now.position, `${width}px: .sticky deixou de ser sticky`).toBe('sticky');
+        expect(now.top, `${width}px: .sticky não está preso sob o cabeçalho no passo ${i + 1}`).toBe(68);
+        expect(now.bar, `${width}px: barra 01..05 fora de sincronia no passo ${i + 1}`).toBe('00000'.slice(0, i) + '1' + '00000'.slice(i + 1));
+        expect(now.title, `${width}px: passo ${i + 1} sem título`).toBeTruthy();
+        titles.push(now.title);
+      }
+      expect(new Set(titles).size, `${width}px: os 5 passos deveriam mostrar 5 títulos diferentes`).toBe(5);
+    });
+  }
+});
+
 test.describe('movimento: reduzir movimento', () => {
   test.use({ reducedMotion: 'reduce' });
   for (const width of [375, 1024]) {
